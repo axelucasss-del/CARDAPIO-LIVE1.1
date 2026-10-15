@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CARDÁPIO DIGITAL – Admin</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-neutral-icon">
+        <i class="fa fa-lock"></i>
+      </div>
+      <h2 class="login-neutral-title">Painel Administrativo</h2>
+      <p class="sub-text">Acesso restrito a administradores</p>
+      <div class="login-error" id="loginError">Usuário ou senha incorretos.</div>
+      <div class="form-group"><label>E-mail do administrador</label><input id="loginUser" type="email" placeholder="admin@seurestaurante.com" autocomplete="username"/></div>
+      <div class="form-group">
+        <label>Senha</label>
+        <div class="pass-input-wrap">
+          <input id="loginPass" type="password" placeholder="••••••" autocomplete="current-password"/>
+          <button type="button" class="btn-eye" onclick="togglePass('loginPass',this)" title="Mostrar/esconder"><i class="fa fa-eye"></i></button>
+        </div>
+      </div>
+      <button class="btn-login" onclick="doLogin()"><i class="fa fa-right-to-bracket"></i> Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADMIN PANEL
+════════════════════════════════════════ -->
+<div id="adminPanel" style="display:none">
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo" id="aSiteLogoWrap">
+        <span class="logo-icon" id="aLogoEmoji">🍔</span>
+        <div class="logo-text"><span class="logo-main" id="aLogoName">CARDÁPIO</span><span class="logo-sub">ADMIN</span></div>
+      </div>
+      <nav class="nav-links">
+        <button class="btn-header-cfg" id="btnHeaderCfg" onclick="toggleConfigMenu()" title="Configurações e Menu de Edição">
+          <i class="fa fa-sliders"></i> <span class="cfg-btn-label">Configurações</span>
+        </button>
+        <a href="index.html" target="_blank" class="nav-btn-iconic" title="Ver site"><i class="fa fa-eye"></i> <span class="nav-btn-text">Site</span></a>
+        <a href="#" onclick="doLogout()" class="nav-btn-iconic" title="Sair"><i class="fa fa-right-from-bracket"></i></a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Geral</div>
+        <button class="sidebar-link active" data-section="pedidos" onclick="goSection('pedidos')">
+          <span class="icon"><i class="fa fa-receipt"></i></span> Pedidos
+          <span class="badge" id="sidebarOrderBadge" style="background:#e8002d;color:#fff;font-weight:700;display:none">0</span>
+        </button>
+        <button class="sidebar-link" data-section="dashboard" onclick="goSection('dashboard')">
+          <span class="icon"><i class="fa fa-chart-bar"></i></span> Painel
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Cardápio</div>
+        <div class="sidebar-sub" id="catSidebarLinks"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Configurações</div>
+        <button class="sidebar-link" data-section="categorias" onclick="goSection('categorias')">
+          <span class="icon"><i class="fa fa-layer-group"></i></span> Categorias
+        </button>
+        <button class="sidebar-link" data-section="bairros" onclick="goSection('bairros')">
+          <span class="icon"><i class="fa fa-motorcycle"></i></span> Taxas de Entrega
+        </button>
+        <button class="sidebar-link" data-section="pagamento" onclick="goSection('pagamento')">
+          <span class="icon"><i class="fa fa-credit-card"></i></span> Pagamento (Mercado Pago)
+        </button>
+        <button class="sidebar-link" data-section="aparencia" onclick="goSection('aparencia')">
+          <span class="icon"><i class="fa fa-palette"></i></span> Aparência
+        </button>
+        <button class="sidebar-link" data-section="senha" onclick="goSection('senha')">
+          <span class="icon"><i class="fa fa-key"></i></span> Senha
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="admin-main" id="adminMain">
+
+      <!-- ─── PEDIDOS EM TEMPO REAL ─── -->
+      <div id="section-pedidos">
+        <div class="panel-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <h2>PEDIDOS <span>EM TEMPO REAL</span></h2>
+            <p class="panel-desc">Acompanhe novos pedidos e altere o status de preparo e entrega</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn-secondary" onclick="toggleAudioAlert()" id="btnAudioToggle" title="Ativar/Desativar som de novos pedidos">
+              <i class="fa fa-volume-high"></i> Som Ativado
+            </button>
+            <button class="btn-secondary" style="color:#ef4444;border-color:rgba(239,68,68,.3)" onclick="confirmDeleteAllFinalized()" id="btnDeleteAllFinalized" title="Excluir todos os pedidos concluídos e cancelados">
+              <i class="fa fa-trash"></i> Excluir Finalizados
+            </button>
+            <button class="btn-primary" onclick="loadAdminOrders()"><i class="fa fa-rotate"></i> Atualizar</button>
+          </div>
+        </div>
+
+        <div class="orders-filter-bar">
+          <button class="order-filter-btn active" onclick="filterAdminOrders('todos', this)">Todos (<span id="countFilterTodos">0</span>)</button>
+          <button class="order-filter-btn" onclick="filterAdminOrders('recebido', this)">🟡 Novos (<span id="countFilterRecebidos">0</span>)</button>
+          <button class="order-filter-btn" onclick="filterAdminOrders('preparo', this)">🔵 Em Preparo (<span id="countFilterPreparo">0</span>)</button>
+          <button class="order-filter-btn" onclick="filterAdminOrders('entrega', this)">🟣 Saiu p/ Entrega (<span id="countFilterEntrega">0</span>)</button>
+          <button class="order-filter-btn" onclick="filterAdminOrders('concluido', this)">🟢 Concluídos (<span id="countFilterConcluidos">0</span>)</button>
+        </div>
+
+        <div class="orders-grid" id="adminOrdersGrid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <i class="fa fa-receipt"></i>
+            <h3>Nenhum pedido recebido ainda</h3>
+            <p>Assim que um cliente fizer um pedido pelo cardápio, ele aparecerá aqui automaticamente com data e hora exatas.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── DASHBOARD ─── -->
+      <div id="section-dashboard" style="display:none">
+        <div class="panel-header">
+          <div><h2>PAINEL <span>GERAL</span></h2><p class="panel-desc">Visão geral do cardápio</p></div>
+        </div>
+        <div class="admin-stats" id="statsRow"></div>
+        <div class="panel-header" style="margin-top:32px">
+          <div><h2>ACESSO <span>RÁPIDO</span></h2></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px" id="quickLinks"></div>
+      </div>
+
+      <!-- ─── CARDÁPIO (items CRUD) ─── -->
+      <div id="section-cardapio" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2 id="cardapioTitle">CARDÁPIO</h2>
+            <p class="panel-desc" id="cardapioDesc">Gerencie os itens</p>
+          </div>
+          <button class="btn-primary" onclick="openItemModal()"><i class="fa fa-plus"></i> Adicionar item</button>
+        </div>
+        <div class="admin-items-grid" id="adminItemsGrid"></div>
+      </div>
+
+      <!-- ─── CATEGORIAS ─── -->
+      <div id="section-categorias" style="display:none">
+        <div class="panel-header">
+          <div><h2>GERENCIAR <span>CATEGORIAS</span></h2><p class="panel-desc">Adicione, edite ou exclua categorias do cardápio</p></div>
+          <button class="btn-primary" onclick="openNewCatModal()"><i class="fa fa-plus"></i> Nova categoria</button>
+        </div>
+        <div class="cat-edit-grid" id="catEditGrid"></div>
+      </div>
+
+      <!-- ─── APARÊNCIA ─── -->
+      <div id="section-aparencia" style="display:none">
+        <div class="panel-header">
+          <div><h2>APARÊNCIA <span>DO SITE</span></h2><p class="panel-desc">Personalize cores, nome, logo e textos</p></div>
+        </div>
+
+        <div class="appearance-grid">
+
+          <!-- CORES -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-palette"></i> Cores do tema</h3>
+            <div class="live-preview">
+              <div class="lp-btn" id="lpBtn">Botão</div>
+              <div class="lp-badge" id="lpBadge">Destaque</div>
+              <div class="lp-price" id="lpPrice">R$ 34,90</div>
+            </div>
+
+            <div class="color-row">
+              <label>Cor principal</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="cp-primary" oninput="liveColor('primary',this.value)"/>
+                <input type="text" id="ct-primary" maxlength="7" oninput="syncColorText('primary',this.value)"/>
+              </div>
+            </div>
+            <div class="color-row">
+              <label>Cor de destaque (preço)</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="cp-accent" oninput="liveColor('accent',this.value)"/>
+                <input type="text" id="ct-accent" maxlength="7" oninput="syncColorText('accent',this.value)"/>
+              </div>
+            </div>
+            <div class="color-row">
+              <label>Cor de fundo</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="cp-bg" oninput="liveColor('bg',this.value)"/>
+                <input type="text" id="ct-bg" maxlength="7" oninput="syncColorText('bg',this.value)"/>
+              </div>
+            </div>
+            <div class="color-row">
+              <label>Cor dos cards</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="cp-card" oninput="liveColor('card',this.value)"/>
+                <input type="text" id="ct-card" maxlength="7" oninput="syncColorText('card',this.value)"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- IDENTIDADE -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-store"></i> Identidade</h3>
+            <div class="form-group">
+              <label>Nome do estabelecimento</label>
+              <input type="text" id="ap-siteName" placeholder="Ex: CARDÁPIO"/>
+            </div>
+            <div class="form-group">
+              <label>Subtítulo / complemento</label>
+              <input type="text" id="ap-siteSub" placeholder="Ex: DIGITAL"/>
+            </div>
+            <div class="form-group">
+              <label>Emoji / ícone do logo</label>
+              <input type="text" id="ap-logoEmoji" placeholder="🍔" maxlength="4"/>
+            </div>
+            <div class="form-group">
+              <label>Logo (imagem) — substitui o emoji</label>
+              <div class="logo-upload-area" onclick="document.getElementById('logoFileInput').click()">
+                <div id="logoPreviewWrap">
+                  <p><i class="fa fa-image" style="margin-right:6px"></i> Clique para enviar imagem do logo</p>
+                  <p style="font-size:.72rem">PNG, JPG · Máx 1MB</p>
+                </div>
+                <input type="file" id="logoFileInput" accept="image/*" onchange="uploadLogo(this)" style="display:none"/>
+              </div>
+              <button class="btn-secondary" style="margin-top:8px;font-size:.75rem;padding:6px 14px" onclick="removeLogo()">
+                <i class="fa fa-xmark"></i> Remover logo
+              </button>
+            </div>
+          </div>
+
+          <!-- HERO / TEXTOS -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-heading"></i> Textos da página inicial</h3>
+            <div class="form-group">
+              <label>Tag do hero (pequena)</label>
+              <input type="text" id="ap-heroTag" placeholder="🔥 O melhor da cidade"/>
+            </div>
+            <input type="hidden" id="ap-heroTitle"/>
+            <div class="form-group">
+              <label>Título do hero (em vermelho)</label>
+              <input type="text" id="ap-heroHighlight" placeholder="CARDÁPIO DIGITAL"/>
+            </div>
+            <div class="form-group">
+              <label>Subtítulo do hero</label>
+              <input type="text" id="ap-heroSubtitle" placeholder="Escolha sua categoria…"/>
+            </div>
+            <div class="form-group">
+              <label>Texto do rodapé</label>
+              <input type="text" id="ap-footerText" placeholder="© 2026 Cardápio Digital · Todos os direitos reservados"/>
+            </div>
+          </div>
+
+          <!-- HERO BACKGROUND IMAGE -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-image"></i> Imagem de fundo do Hero</h3>
+            <p class="form-hint" style="margin-bottom:14px"><i class="fa fa-info-circle"></i> Esta imagem aparece como plano de fundo na seção principal da página inicial.</p>
+            <div class="form-group">
+              <div class="logo-upload-area" onclick="document.getElementById('heroBgFileInput').click()">
+                <div id="heroBgPreviewWrap">
+                  <p><i class="fa fa-image" style="margin-right:6px"></i> Clique para enviar imagem de fundo</p>
+                  <p style="font-size:.72rem">JPG, PNG, WEBP · Máx 3MB</p>
+                </div>
+                <input type="file" id="heroBgFileInput" accept="image/*" onchange="uploadHeroBg(this)" style="display:none"/>
+              </div>
+              <button class="btn-secondary" style="margin-top:8px;font-size:.75rem;padding:6px 14px" onclick="removeHeroBg()">
+                <i class="fa fa-xmark"></i> Remover imagem do hero
+              </button>
+            </div>
+          </div>
+
+          <!-- REDES SOCIAIS -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-share-nodes"></i> Redes sociais</h3>
+            <div class="form-group">
+              <label><i class="fab fa-instagram" style="color:#e1306c"></i> Instagram (URL)</label>
+              <input type="text" id="ap-instagram" placeholder="https://instagram.com/…"/>
+            </div>
+            <div class="form-group">
+              <label><i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp (número)</label>
+              <input type="text" id="ap-whatsapp" placeholder="5511999999999"/>
+              <p class="form-hint"><i class="fa fa-info-circle"></i> Inclua código do país: 55 (Brasil) + DDD + número</p>
+            </div>
+          </div>
+
+        </div><!-- /appearance-grid -->
+
+        <div class="save-bar">
+          <p><i class="fa fa-info-circle"></i> As alterações são aplicadas imediatamente após salvar.</p>
+          <button class="btn-primary" onclick="saveAppearance()"><i class="fa fa-floppy-disk"></i> Salvar aparência</button>
+        </div>
+      </div>
+
+      <!-- ─── TAXAS DE ENTREGA & BAIRROS ─── -->
+      <div id="section-bairros" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2>TAXAS DE ENTREGA <span>POR BAIRRO</span></h2>
+            <p class="panel-desc">Cadastre os bairros atendidos e o valor da taxa de entrega para cada região</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:24px">
+          <!-- CARD ADICIONAR NOVO BAIRRO -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-map-location-dot"></i> Adicionar Novo Bairro</h3>
+            <div class="form-group">
+              <label>Nome do Bairro *</label>
+              <input type="text" id="newBairroName" placeholder="Ex: Centro, Jardim América, etc."/>
+            </div>
+            <div class="form-group">
+              <label>Valor da Taxa (R$) *</label>
+              <input type="text" id="newBairroFee" placeholder="Ex: 5,00"/>
+              <p class="form-hint"><i class="fa fa-info-circle"></i> Use vírgula para centavos (ex: 7,50 ou 0,00 para entrega grátis)</p>
+            </div>
+            <button class="btn-primary" onclick="addBairroAdmin()"><i class="fa fa-plus"></i> Adicionar Bairro</button>
+          </div>
+
+          <!-- CARD TAXA PADRÃO -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-sliders"></i> Taxa Geral / Padrão</h3>
+            <p class="form-hint" style="margin-bottom:12px">Cobrada caso o cliente não selecione um bairro específico:</p>
+            <div class="form-group">
+              <label>Taxa Geral de Entrega (R$)</label>
+              <input type="text" id="defaultDeliveryFeeInput" placeholder="5,00"/>
+            </div>
+            <button class="btn-secondary" onclick="saveDefaultFeeAdmin()"><i class="fa fa-floppy-disk"></i> Salvar Taxa Padrão</button>
+          </div>
+        </div>
+
+        <!-- LISTA / TABELA DE BAIRROS CADASTRADOS -->
+        <div class="appearance-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <h3 style="margin:0"><i class="fa fa-list-check"></i> Bairros Cadastrados (<span id="bairrosCountBadge">0</span>)</h3>
+            <button class="btn-primary" style="font-size:.8rem;padding:6px 14px" onclick="saveBairrosList()"><i class="fa fa-floppy-disk"></i> Salvar Lista</button>
+          </div>
+          <div id="bairrosListContainer">
+            <!-- Gerado via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PAGAMENTO (MERCADO PAGO) ─── -->
+      <div id="section-pagamento" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2>FORMAS DE <span>PAGAMENTO</span></h2>
+            <p class="panel-desc">Configure o Pix Automático via Mercado Pago e as opções de pagamento na entrega</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
+          <!-- MERCADO PAGO INTEGRATION -->
+          <div class="appearance-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <h3 style="margin:0"><i class="fab fa-pix" style="color:#00b4d8"></i> Mercado Pago (Pix Automático)</h3>
+              <span id="mpStatusBadge" class="status-pill pay-pendente">Pendente</span>
+            </div>
+            <p style="font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:14px">
+              Com o Mercado Pago configurado, o cliente recebe um QR Code na tela com verificação automática instantânea sem precisar enviar comprovante!
+            </p>
+            <div class="form-group">
+              <label>Mercado Pago Access Token</label>
+              <div class="pass-input-wrap">
+                <input type="password" id="mpAccessTokenInput" placeholder="APP_USR-xxxxxxxxx..."/>
+                <button type="button" class="btn-eye" onclick="togglePass('mpAccessTokenInput',this)" title="Mostrar/esconder"><i class="fa fa-eye"></i></button>
+              </div>
+              <p class="form-hint">
+                <i class="fa fa-key"></i> Obtenha em: <strong>Mercado Pago Developers > Suas integrações > Credenciais de produção > Access Token</strong>.
+              </p>
+            </div>
+            <button class="btn-primary" onclick="savePaymentSettings()"><i class="fa fa-floppy-disk"></i> Salvar Access Token</button>
+          </div>
+
+          <!-- MÉTODOS DE PAGAMENTO ACEITOS -->
+          <div class="appearance-card">
+            <h3><i class="fa fa-wallet"></i> Métodos Aceitos no Checkout</h3>
+            <p class="form-hint" style="margin-bottom:16px">Selecione quais opções estarão disponíveis para o cliente:</p>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" id="chkAcceptPix" checked style="width:18px;height:18px;accent-color:var(--primary)"/>
+                <span><strong>Pix Automático</strong> (QR Code Mercado Pago)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" id="chkAcceptCard" checked style="width:18px;height:18px;accent-color:var(--primary)"/>
+                <span><strong>Cartão na Entrega</strong> (Maquininha Débito/Crédito)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" id="chkAcceptCash" checked style="width:18px;height:18px;accent-color:var(--primary)"/>
+                <span><strong>Dinheiro na Entrega</strong> (Com opção de troco)</span>
+              </label>
+            </div>
+            <button class="btn-secondary" style="margin-top:20px" onclick="savePaymentSettings()"><i class="fa fa-floppy-disk"></i> Salvar Métodos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SENHA ─── -->
+      <div id="section-senha" style="display:none">
+        <div class="panel-header">
+          <div><h2>ACESSO <span>ADMIN</span></h2><p class="panel-desc">Altere o usuário e a senha do painel administrativo</p></div>
+        </div>
+        <div style="max-width:440px">
+          <div class="appearance-card">
+            <h3><i class="fa fa-user-shield"></i> Alterar usuário</h3>
+            <div class="form-group">
+              <label>E-mail atual (apenas referência)</label>
+              <input type="text" id="currentUser" placeholder="admin" autocomplete="off"/>
+            </div>
+            <div class="form-group">
+              <label>Novo e-mail</label>
+              <input type="text" id="newUser" placeholder="Novo nome de usuário" autocomplete="off"/>
+            </div>
+            <button class="btn-primary" style="margin-bottom:4px" onclick="changeUsername()"><i class="fa fa-user-pen"></i> Alterar usuário</button>
+          </div>
+
+          <div class="appearance-card" style="margin-top:20px">
+            <h3><i class="fa fa-key"></i> Alterar senha</h3>
+            <div class="form-group">
+              <label>Senha atual</label>
+              <div class="pass-input-wrap">
+                <input type="password" id="oldPass" placeholder="••••••" autocomplete="current-password"/>
+                <button type="button" class="btn-eye" onclick="togglePass('oldPass',this)" title="Mostrar/esconder"><i class="fa fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Nova senha</label>
+              <div class="pass-input-wrap">
+                <input type="password" id="newPass" placeholder="••••••" autocomplete="new-password"/>
+                <button type="button" class="btn-eye" onclick="togglePass('newPass',this)" title="Mostrar/esconder"><i class="fa fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Confirmar nova senha</label>
+              <div class="pass-input-wrap">
+                <input type="password" id="confirmPass" placeholder="••••••" autocomplete="new-password"/>
+                <button type="button" class="btn-eye" onclick="togglePass('confirmPass',this)" title="Mostrar/esconder"><i class="fa fa-eye"></i></button>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="changePassword()"><i class="fa fa-key"></i> Alterar senha</button>
+          </div>
+        </div>
+      </div>
+
+    </main><!-- /admin-main -->
+  </div><!-- /admin-layout -->
+</div><!-- /adminPanel -->
+
+<!-- ════════════════════════════════════════
+     MODAL – ADD/EDIT ITEM
+════════════════════════════════════════ -->
+<div class="modal-backdrop" id="itemModalBg" style="display:none" onclick="bgClose('itemModalBg','closeItemModal')">
+<div class="modal">
+  <div class="modal-header">
+    <h3 id="itemModalTitle">NOVO <span>ITEM</span></h3>
+    <button class="modal-close" onclick="closeItemModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="editItemId"/>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="fi-name" placeholder="Nome do item"/>
+      </div>
+      <div class="form-group">
+        <label>Preço</label>
+        <input type="text" id="fi-price" placeholder="Ex: 34,90"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descrição</label>
+      <textarea id="fi-desc" placeholder="Ingredientes, diferenciais…"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Imagens do item <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(até 5 fotos)</span></label>
+      <div class="multi-img-grid" id="multiImgGrid"></div>
+      <input type="file" id="itemImgFileInput" accept="image/*" multiple style="display:none" onchange="handleItemImgUpload(this)">
+      <button type="button" class="btn-secondary" style="margin-top:10px;font-size:.78rem;padding:8px 16px" onclick="triggerItemImgSelect()" id="btnAddImg">
+        <i class="fa fa-plus"></i> Adicionar imagem
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label>Vídeo do item</label>
+      <div class="video-type-tabs" id="videoTypeTabs">
+        <button type="button" class="mini-tab active" data-vtype="youtube" onclick="switchVideoType('youtube')"><i class="fab fa-youtube"></i> Link YouTube</button>
+        <button type="button" class="mini-tab" data-vtype="mp4" onclick="switchVideoType('mp4')"><i class="fa fa-film"></i> Arquivo MP4</button>
+      </div>
+
+      <!-- YouTube / URL -->
+      <div id="videoUrlSection">
+        <input type="text" id="fi-video" placeholder="https://youtube.com/watch?v=…" oninput="previewItemVideo()"/>
+        <p class="form-hint"><i class="fa fa-info-circle"></i> Cole o link do YouTube para embutir o vídeo</p>
+        <div class="video-preview-wrap" id="videoPreviewWrap"></div>
+      </div>
+
+      <!-- MP4 upload -->
+      <div id="videoMp4Section" style="display:none">
+        <div class="img-upload-area" id="videoUploadArea" onclick="document.getElementById('fi-videoFile').click()">
+          <input type="file" id="fi-videoFile" accept="video/mp4,video/webm" onchange="handleItemVideoFile(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+          <div id="videoFilePlaceholder">
+            <div class="upload-icon"><i class="fa fa-film"></i></div>
+            <p><strong>Clique para enviar vídeo</strong></p>
+            <p>MP4, WEBM · Recomendado até 100MB</p>
+          </div>
+          <div id="videoFilePreviewWrap" style="display:none;position:relative">
+            <video id="videoFilePreview" muted loop playsinline style="width:100%;border-radius:8px;max-height:180px;object-fit:cover"></video>
+            <button class="btn-remove-img" onclick="removeItemVideoFile(event)" title="Remover vídeo"><i class="fa fa-xmark"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tags (separadas por vírgula)</label>
+      <input type="text" id="fi-tags" placeholder="Ex: Smash, Destaque, Veggie"/>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-secondary" onclick="closeItemModal()">Cancelar</button>
+    <button class="btn-primary" onclick="saveItem()"><i class="fa fa-floppy-disk"></i> Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL – DELETE CONFIRM -->
+<div class="modal-backdrop" id="deleteModalBg" style="display:none" onclick="bgClose('deleteModalBg','closeDeleteModal')">
+<div class="modal confirm-modal">
+  <div class="modal-header">
+    <h3>REMOVER <span>ITEM</span></h3>
+    <button class="modal-close" onclick="closeDeleteModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="confirm-body">
+    <span class="confirm-icon">🗑️</span>
+    <p>Tem certeza que deseja remover<br/><strong id="deleteItemName" style="color:var(--text)"></strong>?<br/><small>Esta ação não pode ser desfeita.</small></p>
+  </div>
+  <div class="modal-footer" style="justify-content:center;gap:16px">
+    <button class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+    <button class="btn-danger" onclick="confirmDeleteItem()"><i class="fa fa-trash"></i> Remover</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL – EDIT CATEGORY -->
+<div class="modal-backdrop" id="catModalBg" style="display:none" onclick="bgClose('catModalBg','closeCatModal')">
+<div class="modal">
+  <div class="modal-header">
+    <h3 id="catModalTitle">EDITAR <span>CATEGORIA</span></h3>
+    <button class="modal-close" onclick="closeCatModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="editCatSlug"/>
+
+    <div class="form-group">
+      <label>Foto da categoria</label>
+      <div class="img-upload-area" onclick="document.getElementById('catImgFile').click()">
+        <input type="file" id="catImgFile" accept="image/*" onchange="handleCatImage(this)"/>
+        <div id="catImgPlaceholder">
+          <div class="upload-icon"><i class="fa fa-image"></i></div>
+          <p><strong>Clique para enviar foto de capa</strong></p>
+          <p>JPG, PNG · Máx 2MB</p>
+        </div>
+        <div class="img-preview-wrap" id="catImgPreviewWrap" style="display:none">
+          <img id="catImgPreview" src="" alt="preview"/>
+          <button class="btn-remove-img" onclick="removeCatImage(event)"><i class="fa fa-xmark"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome da categoria *</label>
+        <input type="text" id="cat-name" placeholder="Ex: Hambúrgueres"/>
+      </div>
+      <div class="form-group">
+        <label>Ícone (emoji)</label>
+        <input type="text" id="cat-icon" placeholder="🍔" maxlength="4"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descrição</label>
+      <textarea id="cat-desc" placeholder="Breve descrição da categoria…" style="min-height:72px"></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-secondary" onclick="closeCatModal()">Cancelar</button>
+    <button class="btn-primary" onclick="saveCatEdit()"><i class="fa fa-floppy-disk"></i> Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL – DELETE CATEGORY CONFIRM -->
+<div class="modal-backdrop" id="deleteCatModalBg" style="display:none" onclick="bgClose('deleteCatModalBg','closeDeleteCatModal')">
+<div class="modal confirm-modal">
+  <div class="modal-header">
+    <h3>EXCLUIR <span>CATEGORIA</span></h3>
+    <button class="modal-close" onclick="closeDeleteCatModal()"><i class="fa fa-xmark"></i></button>
+  </div>
+  <div class="confirm-body">
+    <span class="confirm-icon">⚠️</span>
+    <p>Tem certeza que deseja excluir a categoria<br/><strong id="deleteCatName" style="color:var(--text)"></strong>?<br/><small style="color:var(--primary);display:block;margin-top:6px">Todos os itens cadastrados nesta categoria também serão excluídos!</small><small>Esta ação não pode ser desfeita.</small></p>
+  </div>
+  <div class="modal-footer" style="justify-content:center;gap:16px">
+    <button class="btn-secondary" onclick="closeDeleteCatModal()">Cancelar</button>
+    <button class="btn-danger" onclick="confirmDeleteCat()"><i class="fa fa-trash"></i> Excluir Categoria</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL / DRAWER – MOBILE CONFIG MENU
+════════════════════════════════════════ -->
+<div class="modal-backdrop" id="configDrawerBg" style="display:none" onclick="bgClose('configDrawerBg','toggleConfigMenu')(event)">
+  <div class="modal config-drawer" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="fa fa-sliders" style="color:var(--primary);margin-right:8px"></i> CONFIGURAÇÕES</h3>
+      <button class="modal-close" onclick="toggleConfigMenu()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px 24px">
+      <div class="drawer-group-title">Pedidos & Vendas</div>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('pedidos')">
+        <div class="drawer-item-icon" style="background:rgba(232,0,45,.15);color:var(--primary)"><i class="fa fa-receipt"></i></div>
+        <div class="drawer-item-info">
+          <strong>Pedidos em Tempo Real</strong>
+          <small>Acompanhar novos pedidos e status</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <div class="drawer-group-title" style="margin-top:16px">Edição Geral do Site</div>
+      
+      <button class="drawer-nav-item" onclick="mobileGoSection('aparencia')">
+        <div class="drawer-item-icon" style="background:rgba(232,0,45,.15);color:var(--primary)"><i class="fa fa-palette"></i></div>
+        <div class="drawer-item-info">
+          <strong>Aparência & Identidade</strong>
+          <small>Cores, Nome, Logo, Imagem de fundo do Hero, Textos</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('categorias')">
+        <div class="drawer-item-icon" style="background:rgba(59,130,246,.15);color:#3b82f6"><i class="fa fa-layer-group"></i></div>
+        <div class="drawer-item-info">
+          <strong>Categorias</strong>
+          <small>Personalizar capas, ícones e descrições</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('bairros')">
+        <div class="drawer-item-icon" style="background:rgba(168,85,247,.15);color:#a855f7"><i class="fa fa-motorcycle"></i></div>
+        <div class="drawer-item-info">
+          <strong>Taxas de Entrega / Bairros</strong>
+          <small>Cadastrar bairros e valores de entrega</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('pagamento')">
+        <div class="drawer-item-icon" style="background:rgba(0,180,216,.15);color:#00b4d8"><i class="fa fa-credit-card"></i></div>
+        <div class="drawer-item-info">
+          <strong>Formas de Pagamento</strong>
+          <small>Pix Mercado Pago e opções na entrega</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <div class="drawer-group-title" style="margin-top:18px">Cardápio (Adicionar e Editar Itens)</div>
+      <div id="drawerCatList" style="display:flex;flex-direction:column;gap:8px"></div>
+
+      <div class="drawer-group-title" style="margin-top:18px">Conta & Geral</div>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('senha')">
+        <div class="drawer-item-icon" style="background:rgba(234,179,8,.15);color:#eab308"><i class="fa fa-key"></i></div>
+        <div class="drawer-item-info">
+          <strong>Trocar Usuário e Senha</strong>
+          <small>Acesso administrativo do painel</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+
+      <button class="drawer-nav-item" onclick="mobileGoSection('dashboard')">
+        <div class="drawer-item-icon" style="background:rgba(168,85,247,.15);color:#a855f7"><i class="fa fa-chart-bar"></i></div>
+        <div class="drawer-item-info">
+          <strong>Painel Geral</strong>
+          <small>Estatísticas do cardápio</small>
+        </div>
+        <i class="fa fa-chevron-right drawer-arrow"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+   AUTH
+════════════════════════════════════════════════════════════ */
+function isLogged() { return sessionStorage.getItem('gamaa_admin') === '1'; }
+
+async function doLogin() {
+  const email = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const client = (typeof getSupabaseClient === 'function') ? getSupabaseClient() : null;
+  const errorBox = document.getElementById('loginError');
+  if (!client) {
+    errorBox.textContent = 'Configure a URL e a chave pública no arquivo supabase-config.js.';
+    errorBox.style.display = 'block';
+    return;
+  }
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    errorBox.textContent = 'E-mail ou senha inválidos. Confira também se o usuário foi criado no Supabase Auth.';
+    errorBox.style.display = 'block';
+    return;
+  }
+  sessionStorage.setItem('gamaa_admin', '1');
+  errorBox.style.display = 'none';
+  await initializeRemotePersistence();
+  showPanel();
+}
+
+async function doLogout() {
+  const client = getSupabaseClient();
+  if (client) await client.auth.signOut();
+  sessionStorage.removeItem('gamaa_admin');
+  location.reload();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !isLogged()) doLogin();
+  if (e.key === 'Escape') {
+    closeItemModal();
+    closeDeleteModal();
+    closeCatModal();
+    closeDeleteCatModal();
+    const cbg = document.getElementById('configDrawerBg');
+    if (cbg) cbg.style.display = 'none';
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') {
+    if (document.getElementById('itemModalBg').style.display !== 'none') saveItem();
+  }
+});
+
+(async function restoreAdminSession() {
+  const client = getSupabaseClient();
+  if (!client) return;
+  const { data } = await client.auth.getSession();
+  if (data && data.session) { sessionStorage.setItem('gamaa_admin', '1'); showPanel(); }
+  else sessionStorage.removeItem('gamaa_admin');
+})();
+
+/* ════════════════════════════════════════════════════════════
+   PANEL INIT & TITLE
+════════════════════════════════════════════════════════════ */
+function updateAdminTitle() {
+  const cfg = getSiteConfig();
+  const name = `${cfg.siteName || 'Cardápio'} ${cfg.siteSub || 'Digital'}`.trim();
+  document.title = `${name} – Admin`;
+  const logoName = document.getElementById('aLogoName');
+  if (logoName) logoName.textContent = cfg.siteName || 'CARDÁPIO';
+  renderAdminLogo(cfg);
+}
+
+function renderAdminLogo(cfg) {
+  if (!cfg) cfg = getSiteConfig();
+  const wrap = document.getElementById('aSiteLogoWrap');
+  const emojiEl = document.getElementById('aLogoEmoji');
+  if (!wrap || !emojiEl) return;
+
+  const existingImg = wrap.querySelector('.logo-img');
+  if (existingImg) existingImg.remove();
+
+  if (cfg.logoImage) {
+    const img = document.createElement('img');
+    img.src = cfg.logoImage;
+    img.className = 'logo-img';
+    img.alt = 'Logo';
+    wrap.insertBefore(img, emojiEl);
+    emojiEl.style.display = 'none';
+  } else {
+    if (cfg.logoEmoji) {
+      emojiEl.textContent = cfg.logoEmoji;
+      emojiEl.style.display = '';
+    } else {
+      emojiEl.textContent = '';
+      emojiEl.style.display = 'none';
+    }
+  }
+}
+
+updateAdminTitle();
+
+function showPanel() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display  = 'block';
+  const cfg = getSiteConfig();
+  applyTheme(cfg);
+  updateAdminTitle();
+  buildCatSidebarLinks();
+  buildQuickLinks();
+  buildDrawerCats();
+  renderStats();
+  initOrdersRealtime();
+  goSection('pedidos');
+}
+
+/* ── Mobile Config Menu ── */
+function toggleConfigMenu() {
+  const bg = document.getElementById('configDrawerBg');
+  if (!bg) return;
+  const isClosed = bg.style.display === 'none' || !bg.style.display;
+  if (isClosed) {
+    buildDrawerCats();
+    bg.style.display = 'flex';
+  } else {
+    bg.style.display = 'none';
+  }
+}
+
+function mobileGoSection(section, catSlug) {
+  const bg = document.getElementById('configDrawerBg');
+  if (bg) bg.style.display = 'none';
+  goSection(section, catSlug);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildDrawerCats() {
+  const wrap = document.getElementById('drawerCatList');
+  if (!wrap) return;
+  const cats = getCategoryConfig();
+  wrap.innerHTML = '';
+  getCatOrder().forEach(slug => {
+    const cat = cats[slug];
+    if (!cat) return;
+    const n = getCategoryItems(slug).length;
+    const btn = document.createElement('button');
+    btn.className = 'drawer-nav-item';
+    btn.onclick = () => mobileGoSection('cardapio', slug);
+    const iconHTML = cat.icon ? `<div class="drawer-item-icon" style="font-size:1.2rem;background:rgba(255,255,255,.05)">${cat.icon}</div>` : '';
+    btn.innerHTML = `
+      ${iconHTML}
+      <div class="drawer-item-info">
+        <strong>${cat.label}</strong>
+        <small>${n} ${n === 1 ? 'item cadastrado' : 'itens cadastrados'}</small>
+      </div>
+      <i class="fa fa-chevron-right drawer-arrow"></i>
+    `;
+    wrap.appendChild(btn);
+  });
+}
+
+/* ── Sidebar category links ── */
+function buildCatSidebarLinks() {
+  const cats = getCategoryConfig();
+  const wrap = document.getElementById('catSidebarLinks');
+  wrap.innerHTML = '';
+  getCatOrder().forEach(slug => {
+    const cat = cats[slug];
+    if (!cat) return;
+    const items = getCategoryItems(slug);
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-link';
+    btn.dataset.section = 'cardapio-' + slug;
+    const iconSpan = cat.icon ? `<span class="icon">${cat.icon}</span> ` : '';
+    btn.innerHTML = `${iconSpan}${cat.label}<span class="badge">${items.length}</span>`;
+    btn.onclick = () => goSection('cardapio', slug);
+    wrap.appendChild(btn);
+  });
+}
+
+function buildQuickLinks() {
+  const cats = getCategoryConfig();
+  const wrap = document.getElementById('quickLinks');
+  wrap.innerHTML = '';
+  getCatOrder().forEach(slug => {
+    const cat = cats[slug];
+    if (!cat) return;
+    const n   = getCategoryItems(slug).length;
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.style.cursor = 'pointer';
+    const iconDiv = cat.icon ? `<div style="font-size:2rem;margin-bottom:6px">${cat.icon}</div>` : '';
+    card.innerHTML = `
+      ${iconDiv}
+      <div class="stat-val" style="font-size:1.8rem">${n}</div>
+      <div class="stat-label">${cat.label}</div>`;
+    card.onclick = () => goSection('cardapio', slug);
+    wrap.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════════════ */
+function renderStats() {
+  const cats = getCategoryConfig();
+  const wrap = document.getElementById('statsRow');
+  let total  = 0;
+  const parts = getCatOrder().map(slug => {
+    const cat = cats[slug];
+    if (!cat) return '';
+    const n = getCategoryItems(slug).length;
+    total  += n;
+    return `<div class="stat-card"><div class="stat-val">${n}</div><div class="stat-label">${cat.label}</div></div>`;
+  }).filter(Boolean);
+  parts.unshift(`<div class="stat-card total"><div class="stat-val">${total}</div><div class="stat-label">Total de itens</div></div>`);
+  wrap.innerHTML = parts.join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   SECTION NAVIGATION
+════════════════════════════════════════════════════════════ */
+let currentCat = 'entradas';
+
+function goSection(section, catSlug) {
+  // Hide all sections
+  document.querySelectorAll('[id^="section-"]').forEach(el => el.style.display = 'none');
+
+  // Deactivate all sidebar links
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+
+  if (section === 'cardapio') {
+    document.getElementById('section-cardapio').style.display = '';
+    const cats  = getCategoryConfig();
+    const order = getCatOrder();
+
+    if (catSlug && cats[catSlug]) {
+      currentCat = catSlug;
+    } else if (!cats[currentCat]) {
+      currentCat = order[0] || Object.keys(cats)[0] || '';
+    }
+
+    const cat = cats[currentCat];
+    const addBtn = document.querySelector('#section-cardapio .btn-primary');
+
+    if (cat) {
+      const titleIcon = cat.icon ? `${cat.icon} ` : '';
+      document.getElementById('cardapioTitle').innerHTML = `${titleIcon}<span>${cat.label.toUpperCase()}</span>`;
+      document.getElementById('cardapioDesc').textContent = `${getCategoryItems(currentCat).length} itens · clique em "Adicionar item" para incluir novos`;
+      if (addBtn) addBtn.style.display = '';
+      renderAdminItems();
+    } else {
+      document.getElementById('cardapioTitle').innerHTML = `CARDÁPIO`;
+      document.getElementById('cardapioDesc').textContent = `Nenhuma categoria cadastrada. Crie uma categoria primeiro.`;
+      if (addBtn) addBtn.style.display = 'none';
+      document.getElementById('adminItemsGrid').innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <i class="fa fa-layer-group"></i>
+          <h3>Nenhuma categoria criada</h3>
+          <p>Você precisa de pelo menos uma categoria para cadastrar itens.</p>
+          <button class="btn-primary" style="margin-top:14px" onclick="goSection('categorias')"><i class="fa fa-plus"></i> Criar Categoria</button>
+        </div>`;
+    }
+
+    // activate sidebar link
+    document.querySelectorAll('.sidebar-link').forEach(el => {
+      if (el.dataset.section === 'cardapio-' + currentCat) el.classList.add('active');
+    });
+  } else {
+    document.getElementById('section-' + section).style.display = '';
+    document.querySelectorAll('.sidebar-link').forEach(el => {
+      if (el.dataset.section === section) el.classList.add('active');
+    });
+    if (section === 'categorias') renderCatEdit();
+    if (section === 'aparencia')  loadAppearanceForm();
+    if (section === 'bairros')    renderBairrosAdmin();
+    if (section === 'pagamento')  loadPaymentSettingsForm();
+    if (section === 'pedidos')    loadAdminOrders();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ITEMS CRUD
+════════════════════════════════════════════════════════════ */
+let editingItemId  = null;
+let deletingItemId = null;
+
+function renderAdminItems() {
+  const items = getCategoryItems(currentCat);
+  const grid  = document.getElementById('adminItemsGrid');
+  grid.innerHTML = '';
+
+  if (items.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <i class="fa fa-circle-plus"></i>
+        <h3>Nenhum item</h3>
+        <p>Clique em "Adicionar item" para cadastrar o primeiro item desta categoria.</p>
+      </div>`;
+    return;
+  }
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'admin-item-card';
+
+    /* ── Media preview ── */
+    let mediaHTML = '';
+    const mainImg = (Array.isArray(item.images) && item.images[0]) || item.imageUrl;
+    if (mainImg) {
+      mediaHTML = `<div class="admin-item-media"><img src="${mainImg}" alt="${item.name}" loading="lazy"/></div>`;
+    } else {
+      const embed = getEmbedUrl(item.videoUrl);
+      if (embed) {
+        if (embed.includes('youtube')||embed.includes('vimeo')) {
+          mediaHTML = `<div class="admin-item-media"><iframe src="${embed}" frameborder="0" allowfullscreen></iframe></div>`;
+        } else {
+          mediaHTML = `<div class="admin-item-media"><video src="${embed}" muted loop playsinline></video></div>`;
+        }
+      } else if (item.videoDbId) {
+        mediaHTML = `<div class="admin-item-media"><video id="admin_vid_${item.id}" muted loop playsinline></video></div>`;
+      } else {
+        mediaHTML = `<div class="admin-item-media"><div class="no-media"><i class="fa fa-image"></i></div></div>`;
+      }
+    }
+
+    card.innerHTML = `
+      ${mediaHTML}
+      <div class="admin-item-info">
+        <h4>${item.name}</h4>
+        ${item.price ? `<div class="price">${formatPrice(item.price)}</div>` : ''}
+        <p>${item.description || '<em style="opacity:.5">Sem descrição</em>'}</p>
+      </div>
+      <div class="admin-item-actions">
+        <button class="btn-edit"   onclick="openItemModal('${item.id}')"><i class="fa fa-pen"></i> Editar</button>
+        <button class="btn-delete" onclick="openDeleteModal('${item.id}','${esc(item.name)}')"><i class="fa fa-trash"></i> Remover</button>
+      </div>`;
+    grid.appendChild(card);
+
+    if (item.videoDbId) {
+      resolveVideoSrc(item).then(src => {
+        const v = document.getElementById('admin_vid_' + item.id);
+        if (v && src) v.src = src;
+      });
+    }
+  });
+}
+
+/* ── Item Modal ── */
+function openItemModal(id) {
+  editingItemId  = id || null;
+  itemImages     = [];
+  currentVideoDbId = null;
+  currentVideoRemoteUrl = '';
+  currentVideoType = 'youtube';
+  clearItemForm();
+
+  if (id) {
+    const item = getCategoryItems(currentCat).find(i => i.id === id);
+    if (!item) return;
+    document.getElementById('itemModalTitle').innerHTML = 'EDITAR <span>ITEM</span>';
+    document.getElementById('editItemId').value = item.id;
+    document.getElementById('fi-name').value    = item.name;
+    document.getElementById('fi-price').value   = item.price || '';
+    document.getElementById('fi-desc').value    = item.description || '';
+    document.getElementById('fi-tags').value    = (item.tags||[]).join(', ');
+
+    // Load images (support old single imageUrl + new images array)
+    if (Array.isArray(item.images) && item.images.length) {
+      itemImages = [...item.images];
+    } else if (item.imageUrl) {
+      itemImages = [item.imageUrl];
+    }
+    renderMultiImgGrid();
+
+    // Load video
+    if (item.videoDbId) {
+      currentVideoDbId = item.videoDbId;
+      switchVideoType('mp4');
+      getVideoFromDb(item.videoDbId).then(blob => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          document.getElementById('videoFilePlaceholder').style.display = 'none';
+          document.getElementById('videoFilePreviewWrap').style.display = '';
+          document.getElementById('videoFilePreview').src = url;
+        }
+      });
+    } else if (item.videoUrl && /\.(mp4|webm|ogg)(\?.*)?$/i.test(item.videoUrl)) {
+      currentVideoRemoteUrl = item.videoUrl;
+      switchVideoType('mp4');
+      document.getElementById('videoFilePlaceholder').style.display = 'none';
+      document.getElementById('videoFilePreviewWrap').style.display = '';
+      document.getElementById('videoFilePreview').src = item.videoUrl;
+    } else if (item.videoUrl) {
+      document.getElementById('fi-video').value = item.videoUrl;
+      switchVideoType('youtube');
+      previewItemVideo();
+    }
+  } else {
+    document.getElementById('itemModalTitle').innerHTML = 'NOVO <span>ITEM</span>';
+    switchVideoType('youtube');
+    renderMultiImgGrid();
+  }
+
+  document.getElementById('itemModalBg').style.display = 'flex';
+  setTimeout(() => document.getElementById('fi-name').focus(), 80);
+}
+
+function closeItemModal() {
+  document.getElementById('itemModalBg').style.display = 'none';
+  clearItemForm();
+}
+
+function clearItemForm() {
+  ['editItemId','fi-name','fi-price','fi-desc','fi-video','fi-tags'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  itemImages = [];
+  renderMultiImgGrid();
+  const vp = document.getElementById('videoPreviewWrap');
+  if (vp) { vp.innerHTML = ''; vp.style.display = 'none'; }
+  // Reset MP4 section
+  const vfp = document.getElementById('videoFilePlaceholder');
+  const vfpw = document.getElementById('videoFilePreviewWrap');
+  if (vfp) vfp.style.display = '';
+  if (vfpw) vfpw.style.display = 'none';
+  const vfv = document.getElementById('videoFilePreview'); if (vfv) vfv.src = '';
+  const vfi = document.getElementById('fi-videoFile'); if (vfi) vfi.value = '';
+  currentVideoDbId = null;
+  switchVideoType('youtube');
+}
+
+function previewItemVideo() {
+  const url = document.getElementById('fi-video').value.trim();
+  const wrap = document.getElementById('videoPreviewWrap');
+  wrap.innerHTML = '';
+  const embed = getEmbedUrl(url);
+  if (embed) {
+    wrap.style.display = 'block';
+    const el = buildVideoElement(url);
+    if (el) wrap.appendChild(el);
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+function saveItem() {
+  const name  = document.getElementById('fi-name').value.trim();
+  const price = document.getElementById('fi-price').value.trim();
+  const desc  = document.getElementById('fi-desc').value.trim();
+  const video = currentVideoType === 'youtube' ? document.getElementById('fi-video').value.trim() : '';
+  const tags  = document.getElementById('fi-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+
+  if (!name) { showToast('Preencha o nome do item.','error'); document.getElementById('fi-name').focus(); return; }
+
+  // Build image fields (keep backward compat)
+  const images   = [...itemImages];
+  const imageUrl = images[0] || '';
+
+  let items = getCategoryItems(currentCat);
+
+  if (editingItemId) {
+    items = items.map(item => {
+      if (item.id !== editingItemId) return item;
+      return { ...item, name, price, description:desc, videoUrl: currentVideoType === 'mp4' ? (currentVideoRemoteUrl || item.videoUrl || '') : video,
+               videoDbId: '',
+               imageUrl, images, tags };
+    });
+    showToast(`"${name}" atualizado!`);
+  } else {
+    items.push({ id:generateId(), name, price, description:desc, videoUrl: currentVideoType === 'mp4' ? currentVideoRemoteUrl : video,
+                 videoDbId: '',
+                 imageUrl, images, tags });
+    showToast(`"${name}" adicionado!`);
+  }
+
+  saveCategoryItems(currentCat, items);
+  closeItemModal();
+  renderAdminItems();
+  renderStats();
+  buildCatSidebarLinks();
+  buildQuickLinks();
+}
+
+/* ── Delete ── */
+function openDeleteModal(id, name) {
+  deletingItemId = id;
+  document.getElementById('deleteItemName').textContent = name;
+  document.getElementById('deleteModalBg').style.display = 'flex';
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModalBg').style.display = 'none';
+  deletingItemId = null;
+}
+function confirmDeleteItem() {
+  if (!deletingItemId) return;
+  let items = getCategoryItems(currentCat);
+  const item = items.find(i => i.id === deletingItemId);
+  if (item) {
+    const images = Array.isArray(item.images) ? item.images : [];
+    [...new Set([...images, item.imageUrl].filter(Boolean))].forEach(url => { if (String(url).startsWith('https://')) deleteStoredAsset(url); });
+    if (item.videoUrl && /storage\/v1\/object\/public\/cardapio-videos\//.test(item.videoUrl)) deleteStoredAsset(item.videoUrl, 'cardapio-videos');
+  }
+  items = items.filter(i => i.id !== deletingItemId);
+  saveCategoryItems(currentCat, items);
+  showToast(`"${item?.name||'Item'}" removido.`,'error');
+  closeDeleteModal();
+  renderAdminItems();
+  renderStats();
+  buildCatSidebarLinks();
+  buildQuickLinks();
+}
+
+/* ════════════════════════════════════════════════════════════
+   CATEGORY EDITOR
+════════════════════════════════════════════════════════════ */
+let editingCatSlug = null;
+let deletingCatSlug = null;
+let currentCatImg  = '';
+
+function renderCatEdit() {
+  const cats  = getCategoryConfig();
+  const order = getCatOrder();
+  const grid  = document.getElementById('catEditGrid');
+  grid.innerHTML = '';
+
+  if (order.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <i class="fa fa-layer-group"></i>
+        <h3>Nenhuma categoria cadastrada</h3>
+        <p>Clique em "Nova categoria" acima para cadastrar a primeira categoria do cardápio.</p>
+      </div>`;
+    return;
+  }
+
+  order.forEach(slug => {
+    const cat = cats[slug];
+    if (!cat) return;
+    const card = document.createElement('div');
+    card.className = 'cat-edit-card';
+
+    const photoStyle = cat.photo ? `background-image:url('${cat.photo}')` : `background:var(--bg3)`;
+    const iconOverlay = cat.icon ? `<span class="cat-edit-icon">${cat.icon}</span>` : '';
+    const n = getCategoryItems(slug).length;
+
+    card.innerHTML = `
+      <div class="cat-edit-preview" style="${photoStyle};background-size:cover;background-position:center">
+        <div class="cat-edit-overlay">
+          ${iconOverlay}
+        </div>
+      </div>
+      <div class="cat-edit-body">
+        <h4>${cat.label}</h4>
+        <p>${cat.description || '<em style="opacity:.5">Sem descrição</em>'}</p>
+        <div style="margin:8px 0 12px">
+          <span class="card-badge">${n} ${n === 1 ? 'item' : 'itens'}</span>
+        </div>
+        <div class="cat-edit-actions" style="display:flex;gap:8px">
+          <button class="btn-primary" style="font-size:.78rem;padding:8px 14px;flex:1" onclick="openCatModal('${slug}')">
+            <i class="fa fa-pen"></i> Editar
+          </button>
+          <button class="btn-danger" style="font-size:.78rem;padding:8px 14px" onclick="openDeleteCatModal('${slug}','${esc(cat.label)}')">
+            <i class="fa fa-trash"></i> Excluir
+          </button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function openNewCatModal() {
+  editingCatSlug = null;
+  currentCatImg  = '';
+  document.getElementById('catModalTitle').innerHTML = 'NOVA <span>CATEGORIA</span>';
+  document.getElementById('editCatSlug').value = '';
+  document.getElementById('cat-name').value    = '';
+  document.getElementById('cat-icon').value    = '';
+  document.getElementById('cat-desc').value    = '';
+
+  // Reset image area
+  document.getElementById('catImgPlaceholder').style.display  = '';
+  document.getElementById('catImgPreviewWrap').style.display  = 'none';
+  document.getElementById('catImgPreview').src = '';
+  document.getElementById('catImgFile').value  = '';
+
+  document.getElementById('catModalBg').style.display = 'flex';
+  setTimeout(() => document.getElementById('cat-name').focus(), 80);
+}
+
+function openCatModal(slug) {
+  editingCatSlug = slug;
+  currentCatImg  = '';
+  const cats = getCategoryConfig();
+  const cat  = cats[slug];
+
+  document.getElementById('editCatSlug').value = slug;
+  document.getElementById('cat-name').value    = cat.label;
+  document.getElementById('cat-icon').value    = cat.icon || '';
+  document.getElementById('cat-desc').value    = cat.description;
+
+  // Reset image area
+  document.getElementById('catImgPlaceholder').style.display  = '';
+  document.getElementById('catImgPreviewWrap').style.display  = 'none';
+  document.getElementById('catImgPreview').src = '';
+  document.getElementById('catImgFile').value  = '';
+
+  if (cat.photo) {
+    currentCatImg = cat.photo;
+    document.getElementById('catImgPlaceholder').style.display  = 'none';
+    document.getElementById('catImgPreviewWrap').style.display  = '';
+    document.getElementById('catImgPreview').src = cat.photo;
+  }
+
+  document.getElementById('catModalBg').style.display = 'flex';
+}
+
+function closeCatModal() {
+  document.getElementById('catModalBg').style.display = 'none';
+  editingCatSlug = null;
+}
+
+async function handleCatImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const data = await uploadDataUrlToStorage(await readImageFile(file), 'categorias');
+    currentCatImg = data;
+    document.getElementById('catImgPlaceholder').style.display  = 'none';
+    document.getElementById('catImgPreviewWrap').style.display  = '';
+    document.getElementById('catImgPreview').src = data;
+  } catch(e) { showToast(e, 'error'); }
+}
+
+function removeCatImage(e) {
+  e.stopPropagation();
+  if (currentCatImg && currentCatImg.startsWith('https://')) deleteStoredAsset(currentCatImg);
+  currentCatImg = '';
+  document.getElementById('catImgFile').value = '';
+  document.getElementById('catImgPlaceholder').style.display = '';
+  document.getElementById('catImgPreviewWrap').style.display = 'none';
+  document.getElementById('catImgPreview').src = '';
+}
+
+function saveCatEdit() {
+  const name = document.getElementById('cat-name').value.trim();
+  const icon = document.getElementById('cat-icon').value.trim();
+  const desc = document.getElementById('cat-desc').value.trim();
+
+  if (!name) { showToast('Preencha o nome da categoria.','error'); return; }
+
+  const cats  = getCategoryConfig();
+  let order   = getCatOrder();
+
+  if (editingCatSlug) {
+    const slug = editingCatSlug;
+    if (!cats[slug]) cats[slug] = {};
+    cats[slug].label       = name;
+    cats[slug].icon        = icon;
+    cats[slug].description = desc;
+    cats[slug].photo       = (currentCatImg !== null && currentCatImg !== undefined) ? currentCatImg : (cats[slug].photo || '');
+    if (!order.includes(slug)) order.push(slug);
+
+    saveCategoryConfig(cats);
+    saveCatOrder(order);
+    showToast(`Categoria "${name}" atualizada!`);
+  } else {
+    // Generate clean slug from category name
+    let baseSlug = name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'cat';
+    let slug = baseSlug;
+    let counter = 1;
+    while (cats[slug]) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    cats[slug] = {
+      label: name,
+      icon: icon,
+      description: desc,
+      photo: currentCatImg || ''
+    };
+    if (!order.includes(slug)) order.push(slug);
+
+    saveCategoryConfig(cats);
+    saveCatOrder(order);
+
+    // Initialize empty menu list for this category
+    const menu = getMenu();
+    if (!menu[slug]) {
+      menu[slug] = [];
+      saveMenu(menu);
+    }
+
+    showToast(`Categoria "${name}" adicionada com sucesso!`);
+  }
+
+  closeCatModal();
+  renderCatEdit();
+  buildCatSidebarLinks();
+  buildDrawerCats();
+  buildQuickLinks();
+  renderStats();
+}
+
+/* ── Delete Category ── */
+function openDeleteCatModal(slug, name) {
+  deletingCatSlug = slug;
+  document.getElementById('deleteCatName').textContent = name;
+  document.getElementById('deleteCatModalBg').style.display = 'flex';
+}
+
+function closeDeleteCatModal() {
+  document.getElementById('deleteCatModalBg').style.display = 'none';
+  deletingCatSlug = null;
+}
+
+function confirmDeleteCat() {
+  if (!deletingCatSlug) return;
+  const slug = deletingCatSlug;
+  const cats = getCategoryConfig();
+  const name = cats[slug]?.label || 'Categoria';
+  if (cats[slug]?.photo && String(cats[slug].photo).startsWith('https://')) deleteStoredAsset(cats[slug].photo);
+
+  // Delete from categories config
+  delete cats[slug];
+  saveCategoryConfig(cats);
+
+  // Remove from order
+  let order = getCatOrder().filter(s => s !== slug);
+  saveCatOrder(order);
+
+  // Remove category items from menu and clean up any IndexedDB videos
+  const menu = getMenu();
+  const itemsToDelete = menu[slug] || [];
+  itemsToDelete.forEach(item => {
+    if (item.videoDbId) deleteVideoFromDb(item.videoDbId);
+  });
+  delete menu[slug];
+  saveMenu(menu);
+
+  // If currently active category is deleted, fallback to remaining
+  if (currentCat === slug) {
+    currentCat = order[0] || '';
+  }
+
+  closeDeleteCatModal();
+  showToast(`Categoria "${name}" excluída.`, 'error');
+
+  renderCatEdit();
+  buildCatSidebarLinks();
+  buildDrawerCats();
+  buildQuickLinks();
+  renderStats();
+
+  if (document.getElementById('section-cardapio').style.display !== 'none') {
+    goSection('cardapio', currentCat);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   APPEARANCE
+════════════════════════════════════════════════════════════ */
+function loadAppearanceForm() {
+  const cfg = getSiteConfig();
+
+  // Color pickers
+  setColorPair('primary', cfg.primaryColor || '#e8002d');
+  setColorPair('accent',  cfg.accentColor  || '#ffc400');
+  setColorPair('bg',      cfg.bgColor      || '#0d0d0d');
+  setColorPair('card',    cfg.cardColor    || '#1a1a1a');
+
+  // Text fields
+  document.getElementById('ap-siteName').value      = cfg.siteName;
+  document.getElementById('ap-siteSub').value       = cfg.siteSub;
+  document.getElementById('ap-logoEmoji').value     = cfg.logoEmoji;
+  document.getElementById('ap-heroTag').value       = cfg.heroTag;
+  document.getElementById('ap-heroTitle').value     = cfg.heroTitle;
+  document.getElementById('ap-heroHighlight').value = cfg.heroHighlight;
+  document.getElementById('ap-heroSubtitle').value  = cfg.heroSubtitle;
+  document.getElementById('ap-footerText').value    = cfg.footerText;
+  document.getElementById('ap-instagram').value     = cfg.instagram;
+  document.getElementById('ap-whatsapp').value      = cfg.whatsapp;
+
+  // Logo
+  updateLogoPreview(cfg.logoImage);
+
+  // Hero background
+  updateHeroBgPreview(cfg.heroBgImage || '');
+}
+
+function setColorPair(key, hex) {
+  document.getElementById('cp-' + key).value = hex;
+  document.getElementById('ct-' + key).value = hex;
+}
+
+function liveColor(key, hex) {
+  document.getElementById('ct-' + key).value = hex;
+  applyLiveTheme();
+}
+
+function syncColorText(key, val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('cp-' + key).value = val;
+    applyLiveTheme();
+  }
+}
+
+function applyLiveTheme() {
+  const draft = {
+    primaryColor: document.getElementById('cp-primary').value,
+    accentColor:  document.getElementById('cp-accent').value,
+    bgColor:      document.getElementById('cp-bg').value,
+    cardColor:    document.getElementById('cp-card').value,
+  };
+  applyTheme(draft);
+}
+
+function updateLogoPreview(imageData) {
+  const wrap = document.getElementById('logoPreviewWrap');
+  if (imageData) {
+    wrap.innerHTML = `
+      <img src="${imageData}" alt="logo"/>
+      <p style="font-size:.72rem">Clique para trocar</p>`;
+  } else {
+    wrap.innerHTML = `
+      <p><i class="fa fa-image" style="margin-right:6px"></i> Clique para enviar imagem do logo</p>
+      <p style="font-size:.72rem">PNG, JPG · Máx 1MB</p>`;
+  }
+}
+
+async function uploadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const data = await uploadDataUrlToStorage(await readImageFile(file, 1), 'logos');
+    const cfg  = getSiteConfig();
+    cfg.logoImage = data;
+    saveSiteConfig(cfg);
+    updateLogoPreview(data);
+    renderAdminLogo(cfg);
+    showToast('Logo atualizado!');
+  } catch(e) { showToast(e,'error'); }
+}
+
+function removeLogo() {
+  const cfg = getSiteConfig();
+  if (cfg.logoImage && cfg.logoImage.startsWith('https://')) deleteStoredAsset(cfg.logoImage);
+  cfg.logoImage = '';
+  saveSiteConfig(cfg);
+  document.getElementById('logoFileInput').value = '';
+  updateLogoPreview('');
+  renderAdminLogo(cfg);
+  showToast('Logo removido.');
+}
+
+/* ── Hero background ── */
+function updateHeroBgPreview(imageData) {
+  const wrap = document.getElementById('heroBgPreviewWrap');
+  if (imageData) {
+    wrap.innerHTML = `
+      <img src="${imageData}" alt="hero bg" style="max-height:100px;width:100%;object-fit:cover;border-radius:8px;margin-bottom:8px"/>
+      <p style="font-size:.72rem">Clique para trocar</p>`;
+  } else {
+    wrap.innerHTML = `
+      <p><i class="fa fa-image" style="margin-right:6px"></i> Clique para enviar imagem de fundo</p>
+      <p style="font-size:.72rem">JPG, PNG, WEBP · Máx 3MB</p>`;
+  }
+}
+
+async function uploadHeroBg(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const data = await uploadDataUrlToStorage(await readImageFile(file, 3), 'capas');
+    const cfg  = getSiteConfig();
+    cfg.heroBgImage = data;
+    saveSiteConfig(cfg);
+    updateHeroBgPreview(data);
+    showToast('Imagem do hero atualizada!');
+  } catch(e) { showToast(e,'error'); }
+}
+
+function removeHeroBg() {
+  const cfg = getSiteConfig();
+  if (cfg.heroBgImage && cfg.heroBgImage.startsWith('https://')) deleteStoredAsset(cfg.heroBgImage);
+  cfg.heroBgImage = '';
+  saveSiteConfig(cfg);
+  document.getElementById('heroBgFileInput').value = '';
+  updateHeroBgPreview('');
+  showToast('Imagem do hero removida.');
+}
+
+function saveAppearance() {
+  const cfg = getSiteConfig();
+
+  cfg.primaryColor  = document.getElementById('cp-primary').value;
+  cfg.accentColor   = document.getElementById('cp-accent').value;
+  cfg.bgColor       = document.getElementById('cp-bg').value;
+  cfg.cardColor     = document.getElementById('cp-card').value;
+  cfg.siteName      = document.getElementById('ap-siteName').value.trim()      || cfg.siteName;
+  cfg.siteSub       = document.getElementById('ap-siteSub').value.trim();
+  cfg.logoEmoji     = document.getElementById('ap-logoEmoji').value.trim();
+  cfg.heroTag       = document.getElementById('ap-heroTag').value.trim();
+  cfg.heroTitle     = document.getElementById('ap-heroTitle').value.trim();
+  cfg.heroHighlight = document.getElementById('ap-heroHighlight').value.trim();
+  cfg.heroSubtitle  = document.getElementById('ap-heroSubtitle').value.trim();
+  cfg.footerText    = document.getElementById('ap-footerText').value.trim();
+  cfg.instagram     = document.getElementById('ap-instagram').value.trim();
+  cfg.whatsapp      = document.getElementById('ap-whatsapp').value.trim();
+  // heroBgImage is saved immediately on upload/remove
+
+  saveSiteConfig(cfg);
+  applyTheme(cfg);
+  updateAdminTitle();
+
+  showToast('Aparência salva com sucesso!');
+}
+
+/* ════════════════════════════════════════════════════════════
+   PASSWORD / USERNAME CHANGE
+════════════════════════════════════════════════════════════ */
+async function changeUsername() {
+  const next = document.getElementById('newUser').value.trim();
+  if (!next || !next.includes('@')) { showToast('Informe um e-mail válido.', 'error'); return; }
+  const client = getSupabaseClient();
+  const { error } = await client.auth.updateUser({ email: next });
+  if (error) { showToast('Não foi possível alterar o e-mail: ' + error.message, 'error'); return; }
+  document.getElementById('currentUser').value = '';
+  document.getElementById('newUser').value = '';
+  showToast('Solicitação de alteração de e-mail enviada. Confira sua caixa de entrada.');
+}
+
+async function changePassword() {
+  const next = document.getElementById('newPass').value;
+  const confirm = document.getElementById('confirmPass').value;
+  if (!next || next.length < 8) { showToast('Use uma senha com pelo menos 8 caracteres.', 'error'); return; }
+  if (next !== confirm) { showToast('As senhas não coincidem.', 'error'); return; }
+  const client = getSupabaseClient();
+  const { error } = await client.auth.updateUser({ password: next });
+  if (error) { showToast('Não foi possível alterar a senha: ' + error.message, 'error'); return; }
+  document.getElementById('oldPass').value = '';
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+  showToast('Senha alterada com sucesso!');
+}
+
+function togglePass(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon  = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa fa-eye';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   MULTI-IMAGE GALLERY (item modal)
+════════════════════════════════════════════════════════════ */
+const MAX_IMAGES = 5;
+let itemImages = []; // array of base64 strings
+
+function renderMultiImgGrid() {
+  const grid = document.getElementById('multiImgGrid');
+  grid.innerHTML = '';
+  itemImages.forEach((src, idx) => {
+    const slot = document.createElement('div');
+    slot.className = 'multi-img-slot';
+    slot.innerHTML = `
+      <img src="${src}" alt="img ${idx+1}" loading="lazy"/>
+      ${idx === 0 ? '<span class="img-badge-main">Principal</span>' : ''}
+      <button class="btn-remove-img" onclick="removeItemImageAt(${idx},event)" title="Remover"><i class="fa fa-xmark"></i></button>`;
+    grid.appendChild(slot);
+  });
+  document.getElementById('btnAddImg').style.display = itemImages.length >= MAX_IMAGES ? 'none' : '';
+}
+
+function triggerItemImgSelect() {
+  if (itemImages.length >= MAX_IMAGES) return;
+  const inp = document.getElementById('itemImgFileInput');
+  if (inp) { inp.value = ''; inp.click(); }
+}
+
+function addImageSlot() {
+  triggerItemImgSelect();
+}
+
+async function handleItemImgUpload(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const remaining = MAX_IMAGES - itemImages.length;
+  if (remaining <= 0) {
+    showToast(`Máximo de ${MAX_IMAGES} imagens atingido.`, 'error');
+    input.value = '';
+    return;
+  }
+  const toProcess = files.slice(0, remaining);
+  for (const file of toProcess) {
+    try {
+      const data = await uploadDataUrlToStorage(await readImageFile(file), 'produtos');
+      if (data && itemImages.length < MAX_IMAGES) {
+        itemImages.push(data);
+      }
+    } catch(err) {
+      showToast(err, 'error');
+    }
+  }
+  input.value = '';
+  renderMultiImgGrid();
+}
+
+function removeItemImageAt(idx, e) {
+  e.stopPropagation();
+  const removedImage = itemImages[idx];
+  if (removedImage && removedImage.startsWith('https://')) deleteStoredAsset(removedImage);
+  itemImages.splice(idx, 1);
+  renderMultiImgGrid();
+}
+
+/* ════════════════════════════════════════════════════════════
+   VIDEO TYPE SWITCHER
+════════════════════════════════════════════════════════════ */
+let currentVideoType = 'youtube';
+let currentVideoDbId = null; // compatibilidade com vídeos antigos locais
+let currentVideoRemoteUrl = '';
+
+function switchVideoType(type) {
+  currentVideoType = type;
+  document.querySelectorAll('#videoTypeTabs .mini-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.vtype === type);
+  });
+  document.getElementById('videoUrlSection').style.display  = type === 'youtube' ? '' : 'none';
+  document.getElementById('videoMp4Section').style.display  = type === 'mp4'     ? '' : 'none';
+}
+
+async function handleItemVideoFile(input) {
+  const file = input.files[0]; if (!file) return;
+  if (!file.type.startsWith('video/')) { showToast('Selecione um arquivo de vídeo.', 'error'); return; }
+  const client = getSupabaseClient();
+  if (!client) { showToast('Configure o Supabase antes de enviar vídeos.', 'error'); return; }
+  try {
+    const path = `videos/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const { error } = await client.storage.from('cardapio-videos').upload(path, file, { contentType: file.type, upsert: false });
+    if (error) throw error;
+    currentVideoRemoteUrl = client.storage.from('cardapio-videos').getPublicUrl(path).data.publicUrl;
+    currentVideoDbId = null;
+    document.getElementById('videoFilePlaceholder').style.display = 'none';
+    document.getElementById('videoFilePreviewWrap').style.display = '';
+    document.getElementById('videoFilePreview').src = currentVideoRemoteUrl;
+    showToast('Vídeo enviado para o armazenamento online!');
+  } catch(e) { console.error(e); showToast('Erro ao enviar vídeo. Confira o bucket cardapio-videos e suas políticas.', 'error'); }
+}
+
+function removeItemVideoFile(e) {
+  e.stopPropagation();
+  if (currentVideoDbId) { deleteVideoFromDb(currentVideoDbId); currentVideoDbId = null; }
+  if (currentVideoRemoteUrl) deleteStoredAsset(currentVideoRemoteUrl, 'cardapio-videos');
+  currentVideoRemoteUrl = '';
+  document.getElementById('fi-videoFile').value = '';
+  document.getElementById('videoFilePlaceholder').style.display = '';
+  document.getElementById('videoFilePreviewWrap').style.display = 'none';
+  document.getElementById('videoFilePreview').src = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   PEDIDOS (GESTÃO EM TEMPO REAL)
+════════════════════════════════════════════════════════════ */
+let adminOrdersList = [];
+let adminOrdersFilter = 'todos';
+let audioAlertEnabled = true;
+let ordersRealtimeSub = null;
+
+function toggleAudioAlert() {
+  audioAlertEnabled = !audioAlertEnabled;
+  const btn = document.getElementById('btnAudioToggle');
+  if (btn) {
+    if (audioAlertEnabled) {
+      btn.innerHTML = '<i class="fa fa-volume-high"></i> Som Ativado';
+      btn.classList.remove('btn-secondary');
+      btn.classList.add('btn-secondary');
+      playOrderNotificationSound();
+    } else {
+      btn.innerHTML = '<i class="fa fa-volume-xmark"></i> Som Mudo';
+    }
+  }
+}
+
+function playOrderNotificationSound() {
+  if (!audioAlertEnabled) return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now); // D5
+    gain1.gain.setValueAtTime(0.3, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.4);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880, now + 0.15); // A5
+    gain2.gain.setValueAtTime(0.35, now + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.15);
+    osc2.stop(now + 0.7);
+  } catch(e) {
+    console.warn('Erro ao reproduzir alerta sonoro:', e);
+  }
+}
+
+function formatOrderDate(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const mon = String(d.getMonth() + 1).padStart(2, '0');
+    const hrs = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${mon} às ${hrs}:${min}`;
+  } catch { return isoStr; }
+}
+
+function cleanPhoneForWa(ph) {
+  const digits = (ph || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('55')) return digits;
+  return '55' + digits;
+}
+
+async function loadAdminOrders() {
+  const grid = document.getElementById('adminOrdersGrid');
+  if (!grid) return;
+
+  try {
+    const orders = await fetchSupabaseOrders();
+    adminOrdersList = orders || [];
+    updateOrdersBadges();
+    renderAdminOrders();
+  } catch(err) {
+    console.error('Erro ao carregar pedidos:', err);
+    showToast('Erro ao carregar pedidos do banco de dados.', 'error');
+  }
+}
+
+function updateOrdersBadges() {
+  const counts = {
+    todos: adminOrdersList.length,
+    recebido: 0,
+    preparo: 0,
+    entrega: 0,
+    concluido: 0
+  };
+
+  adminOrdersList.forEach(o => {
+    if (counts[o.status] !== undefined) counts[o.status]++;
+  });
+
+  const cTodos = document.getElementById('countFilterTodos');
+  const cRecebido = document.getElementById('countFilterRecebidos');
+  const cPreparo = document.getElementById('countFilterPreparo');
+  const cEntrega = document.getElementById('countFilterEntrega');
+  const cConcluido = document.getElementById('countFilterConcluidos');
+  const sBadge = document.getElementById('sidebarOrderBadge');
+
+  if (cTodos) cTodos.textContent = counts.todos;
+  if (cRecebido) cRecebido.textContent = counts.recebido;
+  if (cPreparo) cPreparo.textContent = counts.preparo;
+  if (cEntrega) cEntrega.textContent = counts.entrega;
+  if (cConcluido) cConcluido.textContent = counts.concluido;
+
+  const pendingActive = counts.recebido + counts.preparo;
+  if (sBadge) {
+    sBadge.textContent = pendingActive;
+    sBadge.style.display = pendingActive > 0 ? 'inline-block' : 'none';
+  }
+}
+
+function filterAdminOrders(status, btn) {
+  adminOrdersFilter = status;
+  document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAdminOrders();
+}
+
+function renderAdminOrders() {
+  const grid = document.getElementById('adminOrdersGrid');
+  if (!grid) return;
+
+  const filtered = adminOrdersFilter === 'todos' 
+    ? adminOrdersList 
+    : adminOrdersList.filter(o => o.status === adminOrdersFilter);
+
+  if (!filtered.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <i class="fa fa-receipt"></i>
+        <h3>Nenhum pedido encontrado</h3>
+        <p>${adminOrdersFilter === 'todos' ? 'Nenhum pedido registrado até o momento.' : 'Nenhum pedido com o status "' + adminOrdersFilter + '".'}</p>
+      </div>`;
+    return;
+  }
+
+  const statusMap = {
+    recebido:  { label: '🟡 Novo Pedido',       class: 'state-recebido' },
+    preparo:   { label: '🔵 Em Preparo',        class: 'state-preparo' },
+    entrega:   { label: '🟣 Saiu p/ Entrega',   class: 'state-entrega' },
+    concluido: { label: '🟢 Concluído',         class: 'state-concluido' },
+    cancelado: { label: '🔴 Cancelado',         class: 'state-cancelado' }
+  };
+
+  const payMap = {
+    pix_mercadopago:   'Pix (Mercado Pago)',
+    cartao_entrega:    'Cartão na Entrega',
+    dinheiro_entrega:  'Dinheiro na Entrega'
+  };
+
+  grid.innerHTML = filtered.map(order => {
+    const st = statusMap[order.status] || { label: order.status, class: '' };
+    const payMethodLabel = payMap[order.payment_method] || order.payment_method || 'Pix';
+    const isPaid = order.payment_status === 'pago';
+    const waPhone = cleanPhoneForWa(order.customer_phone);
+    const waMsg = encodeURIComponent(`Olá ${order.customer_name}! Sobre seu pedido #${order.id} no Cardápio Digital:`);
+    const waUrl = waPhone ? `https://wa.me/${waPhone}?text=${waMsg}` : '#';
+
+    const itemsRows = (Array.isArray(order.items) ? order.items : []).map(it => `
+      <tr>
+        <td style="font-weight:700;width:30px;color:var(--text)">${it.qty}x</td>
+        <td>
+          <div style="font-weight:500;color:var(--text)">${esc(it.name)}</div>
+          ${it.notes ? `<div style="font-size:.76rem;color:var(--muted)"><i class="fa fa-comment-dots"></i> ${esc(it.notes)}</div>` : ''}
+        </td>
+        <td style="text-align:right;font-weight:600;color:var(--gold)">${formatPrice((parseFloat(String(it.price).replace(',','.'))||0) * (it.qty||1))}</td>
+      </tr>
+    `).join('');
+
+    // Botoes de Ação
+    let actionButtons = '';
+    if (order.status === 'recebido') {
+      actionButtons += `<button class="btn-order-action primary" onclick="changeOrderStatus('${order.id}', 'preparo')"><i class="fa fa-fire"></i> Preparar</button>`;
+      actionButtons += `<button class="btn-order-action" style="color:#ef4444" onclick="confirmCancelOrder('${order.id}')"><i class="fa fa-ban"></i> Cancelar</button>`;
+    } else if (order.status === 'preparo') {
+      actionButtons += `<button class="btn-order-action primary" onclick="changeOrderStatus('${order.id}', 'entrega')"><i class="fa fa-motorcycle"></i> Saiu p/ Entrega</button>`;
+      actionButtons += `<button class="btn-order-action success" onclick="changeOrderStatus('${order.id}', 'concluido', 'pago')"><i class="fa fa-check"></i> Concluir</button>`;
+    } else if (order.status === 'entrega') {
+      actionButtons += `<button class="btn-order-action success" onclick="changeOrderStatus('${order.id}', 'concluido', 'pago')"><i class="fa fa-check"></i> Concluir Pedido</button>`;
+    }
+
+    if (!isPaid && order.status !== 'cancelado') {
+      actionButtons += `<button class="btn-order-action" style="color:#22c55e" onclick="changeOrderStatus('${order.id}', null, 'pago')"><i class="fa fa-dollar-sign"></i> Confirmar Pago</button>`;
+    }
+
+    // Botão de excluir para pedidos concluídos ou cancelados
+    if (order.status === 'concluido' || order.status === 'cancelado') {
+      actionButtons += `<button class="btn-order-delete" onclick="confirmDeleteOrder('${order.id}')"><i class="fa fa-trash"></i> Excluir Pedido</button>`;
+    }
+
+    return `
+      <div class="order-card status-${order.status}" id="order-card-${order.id}">
+        <div class="order-top">
+          <div>
+            <span class="order-code">#${order.id}</span>
+            <div class="order-time"><i class="fa fa-clock"></i> ${formatOrderDate(order.created_at)}</div>
+          </div>
+          <div class="order-badges-row">
+            <span class="status-pill ${st.class}">${st.label}</span>
+            <span class="status-pill ${isPaid ? 'pay-pago' : 'pay-pendente'}">
+              <i class="fa ${isPaid ? 'fa-check' : 'fa-hourglass-half'}"></i> ${isPaid ? 'PAGO' : 'PAGAMENTO PENDENTE'}
+            </span>
+          </div>
+        </div>
+
+        <div class="order-customer">
+          <div style="font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
+            <span><i class="fa fa-user" style="color:var(--muted);margin-right:4px"></i> ${esc(order.customer_name)}</span>
+            <span class="order-customer-phone">
+              <a href="${waUrl}" target="_blank" title="Conversar no WhatsApp">
+                <i class="fab fa-whatsapp"></i> ${esc(order.customer_phone)}
+              </a>
+            </span>
+          </div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.4">
+            <div><i class="fa ${order.delivery_type==='delivery'?'fa-location-dot':'fa-store'}" style="margin-right:4px"></i> <strong>${order.delivery_type==='delivery'?'Entrega:':'Retirada:'}</strong> ${esc(order.delivery_address || 'Endereço não informado')}</div>
+            <div><i class="fa fa-credit-card" style="margin-right:4px"></i> <strong>Forma:</strong> ${payMethodLabel}</div>
+            ${order.notes ? `<div style="margin-top:4px;color:#eab308"><strong>Obs:</strong> ${esc(order.notes)}</div>` : ''}
+          </div>
+        </div>
+
+        <div style="max-height:160px;overflow-y:auto;padding-right:4px">
+          <table class="order-items-table">
+            <tbody>
+              ${itemsRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="order-summary-row">
+          <span style="font-size:.9rem;color:var(--muted);font-weight:400">Total do Pedido</span>
+          <span>${formatPrice(order.total)}</span>
+        </div>
+
+        <div class="order-action-btns">
+          ${actionButtons}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function changeOrderStatus(orderId, newStatus, newPayStatus) {
+  const success = await updateSupabaseOrderStatus(orderId, newStatus, newPayStatus);
+  if (success) {
+    const o = adminOrdersList.find(x => String(x.id) === String(orderId));
+    if (o) {
+      if (newStatus) o.status = newStatus;
+      if (newPayStatus) o.payment_status = newPayStatus;
+    }
+    updateOrdersBadges();
+    renderAdminOrders();
+    showToast(`Pedido #${orderId} atualizado!`, 'success');
+  } else {
+    showToast('Não foi possível atualizar o pedido.', 'error');
+  }
+}
+
+async function confirmCancelOrder(orderId) {
+  if (!confirm(`Tem certeza que deseja cancelar o pedido #${orderId}?`)) return;
+  await changeOrderStatus(orderId, 'cancelado', null);
+}
+
+async function confirmDeleteOrder(orderId) {
+  if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o pedido #${orderId}?\n\nEsta ação não pode ser desfeita.`)) return;
+  const success = await deleteSupabaseOrder(orderId);
+  if (success) {
+    adminOrdersList = adminOrdersList.filter(o => String(o.id) !== String(orderId));
+    updateOrdersBadges();
+    renderAdminOrders();
+    showToast(`Pedido #${orderId} excluído com sucesso!`, 'success');
+  } else {
+    showToast('Não foi possível excluir o pedido.', 'error');
+  }
+}
+
+async function confirmDeleteAllFinalized() {
+  const finalized = adminOrdersList.filter(o => o.status === 'concluido' || o.status === 'cancelado');
+  if (!finalized.length) {
+    showToast('Não há pedidos concluídos ou cancelados para excluir.', 'error');
+    return;
+  }
+  if (!confirm(`Tem certeza que deseja EXCLUIR TODOS os ${finalized.length} pedidos finalizados (concluídos e cancelados)?\n\nEsta ação é permanente e não pode ser desfeita.`)) return;
+
+  const count = await deleteFinalizedOrdersBatch();
+  if (count > 0) {
+    adminOrdersList = adminOrdersList.filter(o => o.status !== 'concluido' && o.status !== 'cancelado');
+    updateOrdersBadges();
+    renderAdminOrders();
+    showToast(`${count} pedidos finalizados foram excluídos com sucesso!`, 'success');
+  } else {
+    showToast('Não foi possível excluir os pedidos finalizados.', 'error');
+  }
+}
+
+function initOrdersRealtime() {
+  const client = getSupabaseClient();
+  if (!client || ordersRealtimeSub) return;
+
+  try {
+    ordersRealtimeSub = client.channel('realtime-orders-admin')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+        playOrderNotificationSound();
+        showToast(`🔔 Novo pedido #${payload.new.id} recebido!`, 'success');
+        loadAdminOrders();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => {
+        loadAdminOrders();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'orders' }, () => {
+        loadAdminOrders();
+      })
+      .subscribe();
+  } catch(e) {
+    console.warn('Realtime subscription error:', e);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   TAXAS DE ENTREGA & BAIRROS (ADMIN)
+════════════════════════════════════════════════════════════ */
+function renderBairrosAdmin() {
+  const zones = getDeliveryZones();
+  const cfg = getSiteConfig();
+  
+  const countBadge = document.getElementById('bairrosCountBadge');
+  if (countBadge) countBadge.textContent = zones.length;
+
+  const defInput = document.getElementById('defaultDeliveryFeeInput');
+  if (defInput) defInput.value = cfg.deliveryFee || '5,00';
+
+  const container = document.getElementById('bairrosListContainer');
+  if (!container) return;
+
+  if (!zones.length) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:30px;color:var(--muted)">
+        <i class="fa fa-map-location-dot" style="font-size:2rem;margin-bottom:8px"></i>
+        <p>Nenhum bairro cadastrado ainda.</p>
+        <p style="font-size:.8rem">Cadastre os bairros da sua cidade usando o formulário acima.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);text-align:left;color:var(--muted);font-size:.78rem;text-transform:uppercase">
+          <th style="padding:10px 8px">Bairro</th>
+          <th style="padding:10px 8px;width:140px">Taxa (R$)</th>
+          <th style="padding:10px 8px;width:80px;text-align:center">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${zones.map((z, idx) => `
+          <tr style="border-bottom:1px dashed var(--border)">
+            <td style="padding:12px 8px">
+              <input type="text" class="edit-bairro-name" data-idx="${idx}" value="${esc(z.name)}" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;width:100%"/>
+            </td>
+            <td style="padding:12px 8px">
+              <input type="text" class="edit-bairro-fee" data-idx="${idx}" value="${esc(z.fee)}" style="background:var(--bg3);border:1px solid var(--border);color:var(--gold);font-weight:700;padding:6px 10px;border-radius:8px;width:100%"/>
+            </td>
+            <td style="padding:12px 8px;text-align:center">
+              <button type="button" class="btn-secondary" style="color:#ef4444;padding:6px 10px" onclick="deleteBairroAdmin(${idx})" title="Remover bairro">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function addBairroAdmin() {
+  const nameInput = document.getElementById('newBairroName');
+  const feeInput = document.getElementById('newBairroFee');
+  const name = (nameInput.value || '').trim();
+  const fee = (feeInput.value || '').trim() || '0,00';
+
+  if (!name) {
+    showToast('Informe o nome do bairro.', 'error');
+    nameInput.focus();
+    return;
+  }
+
+  const zones = getDeliveryZones();
+  zones.push({ name, fee });
+  saveDeliveryZones(zones);
+
+  nameInput.value = '';
+  feeInput.value = '';
+  renderBairrosAdmin();
+  showToast(`Bairro "${name}" adicionado com sucesso!`);
+}
+
+function deleteBairroAdmin(idx) {
+  const zones = getDeliveryZones();
+  const removed = zones[idx];
+  if (!confirm(`Excluir o bairro "${removed.name}"?`)) return;
+  zones.splice(idx, 1);
+  saveDeliveryZones(zones);
+  renderBairrosAdmin();
+  showToast('Bairro removido com sucesso!');
+}
+
+function saveBairrosList() {
+  const names = document.querySelectorAll('.edit-bairro-name');
+  const fees = document.querySelectorAll('.edit-bairro-fee');
+  const zones = [];
+
+  names.forEach((nameEl, i) => {
+    const n = nameEl.value.trim();
+    const f = fees[i] ? fees[i].value.trim() : '0,00';
+    if (n) zones.push({ name: n, fee: f });
+  });
+
+  saveDeliveryZones(zones);
+  renderBairrosAdmin();
+  showToast('Lista de bairros salva com sucesso!');
+}
+
+function saveDefaultFeeAdmin() {
+  const defInput = document.getElementById('defaultDeliveryFeeInput');
+  const fee = (defInput.value || '').trim() || '5,00';
+  const cfg = getSiteConfig();
+  cfg.deliveryFee = fee;
+  saveSiteConfig(cfg);
+  showToast(`Taxa padrão atualizada para R$ ${fee}!`);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORMAS DE PAGAMENTO & MERCADO PAGO (ADMIN)
+════════════════════════════════════════════════════════════ */
+function loadPaymentSettingsForm() {
+  const cfg = getSiteConfig();
+  const tokenInput = document.getElementById('mpAccessTokenInput');
+  const chkPix = document.getElementById('chkAcceptPix');
+  const chkCard = document.getElementById('chkAcceptCard');
+  const chkCash = document.getElementById('chkAcceptCash');
+  const badge = document.getElementById('mpStatusBadge');
+
+  if (tokenInput) tokenInput.value = cfg.mpAccessToken || '';
+  if (chkPix) chkPix.checked = cfg.acceptPix !== false;
+  if (chkCard) chkCard.checked = cfg.acceptCard !== false;
+  if (chkCash) chkCash.checked = cfg.acceptCash !== false;
+
+  if (badge) {
+    const hasToken = !!(cfg.mpAccessToken && cfg.mpAccessToken.trim());
+    badge.className = hasToken ? 'status-pill pay-pago' : 'status-pill pay-pendente';
+    badge.innerHTML = hasToken ? '<i class="fa fa-check"></i> Ativo' : '<i class="fa fa-triangle-exclamation"></i> Não configurado';
+  }
+}
+
+function savePaymentSettings() {
+  const cfg = getSiteConfig();
+  const token = (document.getElementById('mpAccessTokenInput').value || '').trim();
+  const chkPix = document.getElementById('chkAcceptPix');
+  const chkCard = document.getElementById('chkAcceptCard');
+  const chkCash = document.getElementById('chkAcceptCash');
+
+  cfg.mpAccessToken = token;
+  if (chkPix) cfg.acceptPix = chkPix.checked;
+  if (chkCard) cfg.acceptCard = chkCard.checked;
+  if (chkCash) cfg.acceptCash = chkCash.checked;
+
+  saveSiteConfig(cfg);
+  loadPaymentSettingsForm();
+  showToast('Configurações de pagamento salvas com sucesso!');
+}
+
+/* ════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════ */
+function esc(str) { return (str||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function bgClose(backdropId, closeFn) {
+  return function(e) { if (e.target.id === backdropId) window[closeFn](); };
+}
+
+document.getElementById('itemModalBg').onclick      = bgClose('itemModalBg','closeItemModal');
+document.getElementById('deleteModalBg').onclick    = bgClose('deleteModalBg','closeDeleteModal');
+document.getElementById('catModalBg').onclick       = bgClose('catModalBg','closeCatModal');
+document.getElementById('deleteCatModalBg').onclick = bgClose('deleteCatModalBg','closeDeleteCatModal');
+</script>
+</body>
+</html>

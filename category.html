@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Cardápio</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <a href="index.html" class="logo" id="siteLogoWrap" title="Voltar ao início" style="cursor:pointer">
+      <span class="logo-icon" id="logoEmoji">🍔</span>
+      <div class="logo-text">
+        <span class="logo-main" id="headerName">CARDÁPIO</span>
+        <span class="logo-sub"  id="headerSub">DIGITAL</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html"><i class="fa fa-home"></i> <span class="nav-btn-text">Início</span></a>
+      <!-- Botão do cliente é injetado dinamicamente por initCustomerUI() -->
+    </nav>
+  </div>
+</header>
+
+<!-- PAGE HEADER -->
+<div class="page-header" id="pageHeader">
+  <div class="cat-hero-photo" id="catHeroPhoto"></div>
+  <a href="index.html" class="back-btn" id="btnBackMenu" onclick="window.location.href='index.html'; return false;"><i class="fa fa-arrow-left"></i> Voltar ao cardápio</a>
+  <h1 id="catTitle">—</h1>
+  <p id="catDesc">—</p>
+</div>
+
+<!-- CATEGORY PILL TABS (SMARTPHONE FRIENDLY) -->
+<div class="cat-pill-nav-container">
+  <div class="cat-pill-nav" id="catPillNav"></div>
+</div>
+
+<!-- ITEMS -->
+<section class="items-section">
+  <div class="items-grid" id="itemsGrid"></div>
+</section>
+
+<!-- FLOATING CART BUTTON -->
+<button class="cart-floating-btn" id="cartFloatBtn" onclick="openCartModal()" style="display:none">
+  <i class="fa fa-shopping-bag"></i>
+  <span class="cart-badge" id="cartBadgeCount">0</span>
+  <span class="cart-total-preview" id="cartTotalPreview">R$ 0,00</span>
+</button>
+
+<!-- MODAL – CARRINHO DE COMPRAS -->
+<div class="modal-backdrop" id="cartModalBg" style="display:none" onclick="if(event.target===this)closeCartModal()">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h3>SEU <span>PEDIDO</span></h3>
+      <button class="modal-close" onclick="closeCartModal()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+      <div id="cartItemsList"></div>
+      
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <label style="font-weight:600;font-size:.9rem;display:block;margin-bottom:8px">Forma de Recebimento</label>
+        <div class="delivery-tabs">
+          <button type="button" class="delivery-tab-btn active" id="tabDelivery" onclick="setDeliveryType('delivery')">
+            <i class="fa fa-motorcycle"></i> Entrega
+          </button>
+          <button type="button" class="delivery-tab-btn" id="tabRetirada" onclick="setDeliveryType('retirada')">
+            <i class="fa fa-store"></i> Retirada
+          </button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:6px">
+          <span>Subtotal</span>
+          <span id="cartSubtotalText">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:10px" id="deliveryFeeRow">
+          <span>Taxa de Entrega</span>
+          <span id="cartDeliveryFeeText">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:1.2rem;font-weight:700;color:var(--gold);padding-top:10px;border-top:1px dashed var(--border)">
+          <span>Total</span>
+          <span id="cartGrandTotalText">R$ 0,00</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:12px">
+      <button class="btn-secondary" onclick="closeCartModal()">Continuar Comprando</button>
+      <button class="btn-primary" onclick="proceedToCheckout()"><i class="fa fa-arrow-right"></i> Finalizar Pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL – CHECKOUT / DADOS & PAGAMENTO -->
+<div class="modal-backdrop" id="checkoutModalBg" style="display:none" onclick="if(event.target===this)closeCheckoutModal()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3>DADOS DO <span>CLIENTE</span></h3>
+      <button class="modal-close" onclick="closeCheckoutModal()"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <div id="checkoutCustomerBanner" class="checkout-cust-banner" style="display:none"></div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Seu Nome *</label>
+          <input type="text" id="custName" placeholder="Ex: João Silva" required/>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>WhatsApp / Telefone *</label>
+          <input type="tel" id="custPhone" placeholder="Ex: (11) 99999-9999" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>E-mail (opcional, para recibo)</label>
+        <input type="email" id="custEmail" placeholder="seu@email.com"/>
+      </div>
+
+      <div id="addressFieldsWrap">
+        <div class="form-group">
+          <label>Bairro de Entrega *</label>
+          <select id="custBairro" onchange="onBairroChange(this.value)">
+            <option value="">Carregando bairros...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Endereço de Entrega (Rua e Número) *</label>
+          <input type="text" id="custAddress" placeholder="Ex: Rua das Palmeiras, 142"/>
+        </div>
+        <div class="form-group">
+          <label>Complemento / Ponto de Referência</label>
+          <input type="text" id="custComplement" placeholder="Apto, bloco, portão, próximo à padaria..."/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observações do Pedido</label>
+        <textarea id="custNotes" placeholder="Ex: Sem cebola, ponto da carne, caprichar no molho..." style="min-height:60px"></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label style="font-weight:700;font-size:.95rem;margin-bottom:8px;display:block">Forma de Pagamento *</label>
+        
+        <label class="pay-option-card active" onclick="selectPayMethod('pix_mercadopago')">
+          <input type="radio" name="payMethod" value="pix_mercadopago" checked/>
+          <div style="flex:1">
+            <strong><i class="fab fa-pix" style="color:#00b4d8;margin-right:6px"></i> Pix Automático (Mercado Pago)</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Aprovação instantânea na tela via QR Code</p>
+          </div>
+          <span style="font-size:.75rem;background:#00b4d8;color:#fff;padding:2px 8px;border-radius:20px;font-weight:700">RÁPIDO</span>
+        </label>
+
+        <label class="pay-option-card" onclick="selectPayMethod('cartao_entrega')">
+          <input type="radio" name="payMethod" value="cartao_entrega"/>
+          <div style="flex:1">
+            <strong><i class="fa fa-credit-card" style="color:var(--gold);margin-right:6px"></i> Cartão na Entrega</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Débito ou Crédito na maquininha</p>
+          </div>
+        </label>
+
+        <label class="pay-option-card" onclick="selectPayMethod('dinheiro_entrega')">
+          <input type="radio" name="payMethod" value="dinheiro_entrega"/>
+          <div style="flex:1">
+            <strong><i class="fa fa-money-bill-wave" style="color:#22c55e;margin-right:6px"></i> Dinheiro</strong>
+            <p style="font-size:.78rem;color:var(--muted)">Pague em dinheiro ao receber</p>
+          </div>
+        </label>
+
+        <div id="trocoFieldWrap" style="display:none;margin-top:10px">
+          <label style="font-size:.85rem">Precisa de troco para quanto?</label>
+          <input type="text" id="custTroco" placeholder="Ex: Troco para R$ 50,00"/>
+        </div>
+      </div>
+
+      <!-- Resumo de Valores no Checkout -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted);margin-bottom:6px">
+          <span>Subtotal</span>
+          <span id="checkoutSubtotalText">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;color:var(--muted);margin-bottom:8px" id="checkoutFeeRow">
+          <span>Taxa de Entrega</span>
+          <span id="checkoutFeeText">R$ 0,00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:1.15rem;font-weight:700;color:var(--gold);padding-top:8px;border-top:1px dashed var(--border)">
+          <span>Total do Pedido</span>
+          <span id="checkoutTotalText">R$ 0,00</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:12px">
+      <button class="btn-secondary" onclick="closeCheckoutModal()">Voltar</button>
+      <button class="btn-primary" id="btnConfirmOrder" onclick="submitFinalOrder()">
+        <i class="fa fa-check"></i> Confirmar & Pagar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL – PIX MERCADO PAGO QR CODE -->
+<div class="modal-backdrop" id="pixModalBg" style="display:none">
+  <div class="modal" style="max-width:480px;text-align:center">
+    <div class="modal-header" style="justify-content:center">
+      <h3>PAGAMENTO <span>PIX</span></h3>
+    </div>
+    <div class="modal-body pix-container">
+      <p style="font-size:.92rem;color:var(--muted);margin-bottom:8px">Escaneie o QR Code abaixo no app do seu banco:</p>
+      <div id="pixQrCodeImageWrap">
+        <i class="fa fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);margin:30px 0"></i>
+      </div>
+      <div style="margin:14px 0">
+        <label style="font-size:.8rem;color:var(--muted);display:block;margin-bottom:4px">Ou copie o código Pix abaixo:</p>
+        <div class="pix-code-wrap">
+          <input type="text" id="pixCopiaColaText" class="pix-code-input" readonly/>
+          <button class="btn-primary" style="padding:8px 16px;font-size:.85rem" onclick="copyPixCode()"><i class="fa fa-copy"></i> Copiar</button>
+        </div>
+      </div>
+      <div style="background:rgba(var(--primary-rgb),.1);border:1px solid rgba(var(--primary-rgb),.3);border-radius:12px;padding:12px;margin-top:16px;display:flex;align-items:center;gap:10px;justify-content:center">
+        <i class="fa fa-circle-notch fa-spin" style="color:var(--primary)"></i>
+        <span style="font-size:.85rem;font-weight:600">Aguardando pagamento... Atualização automática!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL – SUCESSO DO PEDIDO -->
+<div class="modal-backdrop" id="orderSuccessModalBg" style="display:none">
+  <div class="modal" style="max-width:460px;text-align:center">
+    <div class="modal-body" style="padding:36px 24px">
+      <div style="font-size:3.5rem;color:#22c55e;margin-bottom:12px">🎉</div>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:1px;margin-bottom:6px">PEDIDO <span style="color:#22c55e">CONFIRMADO!</span></h2>
+      <p style="color:var(--muted);margin-bottom:16px" id="successOrderNumText">Pedido recebido com sucesso.</p>
+      <div style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;font-size:.88rem" id="successOrderSummary"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:10px;padding:12px 16px;font-size:1rem" onclick="goToTrackerFromSuccess()"><i class="fa fa-motorcycle"></i> Acompanhar Pedido ao Vivo</button>
+      <button class="btn-secondary" style="width:100%" onclick="closeOrderSuccessModal()">Voltar ao Início</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-icon" id="footerEmoji">🍔</span>
+      <span class="footer-name" id="footerName">CARDÁPIO DIGITAL</span>
+    </div>
+    <div class="footer-social" id="footerSocial"></div>
+    <p class="footer-copy" id="footerText">© 2026 Cardápio Digital</p>
+    <a href="admin.html" class="footer-admin-link" aria-label="Acesso Administrativo" title="Painel Admin"><i class="fa fa-lock"></i></a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js"></script>
+<script>
+const cfg  = getSiteConfig();
+const cats = getCategoryConfig();
+applyTheme(cfg);
+
+/* ── Header / footer ── */
+document.getElementById('headerName').textContent = cfg.siteName;
+document.getElementById('headerSub').textContent  = cfg.siteSub;
+const fEmoji = document.getElementById('footerEmoji');
+if (cfg.logoEmoji) {
+  fEmoji.textContent = cfg.logoEmoji;
+  fEmoji.style.display = '';
+} else {
+  fEmoji.textContent = '';
+  fEmoji.style.display = 'none';
+}
+document.getElementById('footerName').textContent  = `${cfg.siteName} ${cfg.siteSub}`.trim().toUpperCase();
+document.getElementById('footerText').textContent  = cfg.footerText;
+
+const emojiEl = document.getElementById('logoEmoji');
+if (cfg.logoImage) {
+  const wrap = document.getElementById('siteLogoWrap');
+  const img = document.createElement('img');
+  img.src = cfg.logoImage; img.className = 'logo-img'; img.alt = 'Logo';
+  wrap.insertBefore(img, emojiEl); emojiEl.style.display = 'none';
+} else {
+  if (cfg.logoEmoji) {
+    emojiEl.textContent = cfg.logoEmoji;
+    emojiEl.style.display = '';
+  } else {
+    emojiEl.textContent = '';
+    emojiEl.style.display = 'none';
+  }
+}
+
+const footerSocial = document.getElementById('footerSocial');
+if (cfg.instagram) footerSocial.innerHTML += `<a href="${cfg.instagram}" target="_blank"><i class="fab fa-instagram"></i></a>`;
+if (cfg.whatsapp) {
+  const wa = cfg.whatsapp.replace(/\D/g,'');
+  footerSocial.innerHTML += `<a href="https://wa.me/${wa}" target="_blank"><i class="fab fa-whatsapp"></i></a>`;
+}
+
+/* ── Category info ── */
+const params = new URLSearchParams(location.search);
+const slug   = params.get('cat') || getCatOrder()[0] || 'hamburgueres';
+const cat    = cats[slug] || { label: slug, icon: '', description: '', photo: '' };
+
+document.title = `${cfg.siteName} – ${cat.label}`;
+
+// Hero photo
+if (cat.photo) {
+  document.getElementById('catHeroPhoto').style.backgroundImage = `url('${cat.photo}')`;
+}
+
+const titleIcon = cat.icon ? `${cat.icon} ` : '';
+document.getElementById('catTitle').innerHTML = `${titleIcon}<span>${cat.label.toUpperCase()}</span>`;
+document.getElementById('catDesc').textContent = cat.description;
+
+/* ── Render Category Pills (Super fast smartphone navigation) ── */
+const pillNav = document.getElementById('catPillNav');
+if (pillNav) {
+  pillNav.innerHTML = '';
+  getCatOrder().forEach(cSlug => {
+    const cItem = cats[cSlug];
+    if (!cItem) return;
+    const a = document.createElement('a');
+    a.href = `category.html?cat=${cSlug}`;
+    a.className = `cat-pill-btn ${cSlug === slug ? 'active' : ''}`;
+    const pillIcon = cItem.icon ? `<span class="pill-icon">${cItem.icon}</span> ` : '';
+    a.innerHTML = `${pillIcon}<span class="pill-label">${cItem.label}</span>`;
+    pillNav.appendChild(a);
+  });
+  // Auto-scroll pill nav to active category on mobile
+  setTimeout(() => {
+    const activePill = pillNav.querySelector('.cat-pill-btn.active');
+    if (activePill) {
+      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, 100);
+}
+
+/* ── Render items ── */
+function renderItems() {
+  window.cardImages = {};
+  const items = getCategoryItems(slug);
+  const grid  = document.getElementById('itemsGrid');
+  grid.innerHTML = '';
+
+  if (items.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <i class="fa fa-utensils"></i>
+        <h3>Nenhum item disponível</h3>
+        <p>Esta categoria ainda não possui itens. O administrador pode adicioná-los.</p>
+      </div>`;
+    return;
+  }
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    /* ── Image section — supports multiple images ── */
+    const imgs = (Array.isArray(item.images) && item.images.length) ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+    let imageHTML = '';
+    if (imgs.length > 0) {
+      window.cardImages[item.id] = { imgs, idx: 0 };
+      if (imgs.length === 1) {
+        imageHTML = `
+          <div class="item-image-wrap" style="position:relative">
+            <img src="${imgs[0]}" alt="${item.name}" loading="lazy"/>
+          </div>`;
+      } else {
+        imageHTML = `
+          <div class="item-image-wrap item-slider-wrap" id="slider_${item.id}">
+            <img src="${imgs[0]}" id="img_${item.id}" alt="${item.name}" loading="lazy"/>
+            <span class="img-count-badge" id="badge_${item.id}"><i class="fa fa-images"></i> 1/${imgs.length}</span>
+            <button type="button" class="slider-btn prev" onclick="changeCardSlide('${item.id}', -1, event)" aria-label="Imagem anterior"><i class="fa fa-chevron-left"></i></button>
+            <button type="button" class="slider-btn next" onclick="changeCardSlide('${item.id}', 1, event)" aria-label="Próxima imagem"><i class="fa fa-chevron-right"></i></button>
+            <div class="slider-dots" id="dots_${item.id}">
+              ${imgs.map((_, i) => `<span class="s-dot ${i === 0 ? 'active' : ''}" onclick="goToCardSlide('${item.id}', ${i}, event)"></span>`).join('')}
+            </div>
+          </div>`;
+      }
+    }
+
+    /* ── Video section ── */
+    let videoHTML = '';
+    if (item.videoDbId) {
+      // async load from IndexedDB — rendered after append
+      videoHTML = `<div class="item-video-wrap" id="vidwrap_${item.id}"><div class="no-media" style="position:absolute;inset:0"><i class="fa fa-spinner fa-spin"></i></div></div>`;
+    } else {
+      const embed = getEmbedUrl(item.videoUrl);
+      if (embed) {
+        if (embed.includes('youtube') || embed.includes('vimeo')) {
+          videoHTML = `
+            <div class="item-video-wrap">
+              <iframe src="${embed}" frameborder="0" allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+              </iframe>
+            </div>`;
+        } else {
+          videoHTML = `
+            <div class="item-video-wrap">
+              <video src="${embed}" controls muted loop playsinline></video>
+            </div>`;
+        }
+      }
+    }
+
+    /* ── Placeholder (neither image nor video) ── */
+    if (!imageHTML && !videoHTML) {
+      imageHTML = `
+        <div class="item-image-wrap" style="padding-top:46%">
+          <div class="no-media" style="position:absolute;inset:0">
+            <i class="fa fa-image"></i>
+            <span>Sem imagem</span>
+          </div>
+        </div>`;
+    }
+
+    /* ── Tags ── */
+    const tagsHTML = (item.tags || []).map(t => `<span class="item-tag">${t}</span>`).join('');
+
+    card.innerHTML = `
+      ${imageHTML}
+      ${videoHTML}
+      <div class="item-info">
+        <div class="item-info-top">
+          <h3>${item.name}</h3>
+          ${item.price ? `<div class="item-price">${formatPrice(item.price)}</div>` : ''}
+        </div>
+        <p class="item-desc">${item.description || ''}</p>
+        <div class="item-info-bottom" style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <div class="item-tags">${tagsHTML}</div>
+          <button type="button" class="btn-add-cart" onclick="promptAddToCart('${item.id}', event)">
+            <i class="fa fa-plus"></i> Adicionar
+          </button>
+        </div>
+      </div>`;
+
+    grid.appendChild(card);
+
+    // Async load MP4 from IndexedDB if needed
+    if (item.videoDbId) {
+      resolveVideoSrc(item).then(src => {
+        const w = document.getElementById('vidwrap_' + item.id);
+        if (w && src) w.innerHTML = `<video src="${src}" controls muted loop playsinline></video>`;
+      });
+    }
+  });
+}
+
+function changeCardSlide(id, dir, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const data = window.cardImages && window.cardImages[id];
+  if (!data || !data.imgs.length) return;
+  const newIdx = (data.idx + dir + data.imgs.length) % data.imgs.length;
+  goToCardSlide(id, newIdx, e);
+}
+
+function goToCardSlide(id, idx, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const data = window.cardImages && window.cardImages[id];
+  if (!data || !data.imgs[idx]) return;
+  data.idx = idx;
+  const imgEl = document.getElementById('img_' + id);
+  if (imgEl) imgEl.src = data.imgs[idx];
+  const badge = document.getElementById('badge_' + id);
+  if (badge) badge.innerHTML = `<i class="fa fa-images"></i> ${idx + 1}/${data.imgs.length}`;
+  const dotsWrap = document.getElementById('dots_' + id);
+  if (dotsWrap) {
+    const dots = dotsWrap.querySelectorAll('.s-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+}
+
+renderItems();
+
+/* ── Particles ── */
+const pc = document.getElementById('particles');
+for (let i = 0; i < 14; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left              = Math.random() * 100 + 'vw';
+  p.style.animationDelay    = Math.random() * 8 + 's';
+  p.style.animationDuration = (6 + Math.random() * 6) + 's';
+  p.style.width = p.style.height = (3 + Math.random() * 7) + 'px';
+  pc.appendChild(p);
+}
+
+/* ── Back to home button handler ── */
+const btnBack = document.getElementById('btnBackMenu');
+if (btnBack) {
+  btnBack.addEventListener('click', function(e) {
+    e.preventDefault();
+    window.location.href = 'index.html';
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   CART & CHECKOUT LOGIC
+════════════════════════════════════════════════════════════ */
+let currentDeliveryType = 'delivery';
+let selectedPayMethod = 'pix_mercadopago';
+let selectedBairro = '';
+let activeMpPollingTimer = null;
+
+function promptAddToCart(itemId, e) {
+  if (e) e.stopPropagation();
+  const items = getCategoryItems(slug);
+  const item = items.find(i => i.id === itemId);
+  if (!item) return;
+  addToCart(item, 1);
+  updateCartUI();
+}
+
+function getCurrentDeliveryFee() {
+  if (currentDeliveryType !== 'delivery') return 0;
+  if (selectedBairro && typeof getDeliveryFeeForBairro === 'function') {
+    return getDeliveryFeeForBairro(selectedBairro);
+  }
+  const zones = (typeof getDeliveryZones === 'function') ? getDeliveryZones() : [];
+  if (zones.length > 0 && zones[0].fee) {
+    return parseFloat(String(zones[0].fee).replace(',', '.')) || 0;
+  }
+  return parseFloat(String(cfg.deliveryFee || '5,00').replace(',', '.')) || 0;
+}
+
+function updateCartUI() {
+  const count = getCartCount();
+  const floatBtn = document.getElementById('cartFloatBtn');
+  const badge = document.getElementById('cartBadgeCount');
+  const preview = document.getElementById('cartTotalPreview');
+  
+  if (floatBtn) {
+    floatBtn.style.display = count > 0 ? 'flex' : 'none';
+  }
+  if (badge) badge.textContent = count;
+  
+  const subtotal = getCartSubtotal();
+  const fee = getCurrentDeliveryFee();
+  const total = subtotal + fee;
+
+  if (preview) preview.textContent = formatPrice(total);
+
+  // Render list if cart modal open
+  const list = document.getElementById('cartItemsList');
+  if (list) {
+    const cart = getCart();
+    if (!cart.length) {
+      list.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--muted)"><i class="fa fa-shopping-bag" style="font-size:2rem;margin-bottom:8px"></i><p>Seu pedido está vazio.</p></div>`;
+    } else {
+      list.innerHTML = cart.map((cItem, idx) => `
+        <div class="cart-item-row">
+          <div class="cart-item-info">
+            <div class="cart-item-title">${cItem.name}</div>
+            <div class="cart-item-price">${formatPrice(cItem.price)}</div>
+            ${cItem.notes ? `<div class="cart-item-notes">${cItem.notes}</div>` : ''}
+          </div>
+          <div class="cart-qty-ctrl">
+            <button class="cart-qty-btn" onclick="updateCartItemQty(${idx}, -1)"><i class="fa fa-minus"></i></button>
+            <span class="cart-qty-num">${cItem.qty}</span>
+            <button class="cart-qty-btn" onclick="updateCartItemQty(${idx}, 1)"><i class="fa fa-plus"></i></button>
+          </div>
+          <button style="background:none;border:none;color:#ef4444;cursor:pointer;padding:6px" onclick="removeCartItem(${idx})"><i class="fa fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+  }
+
+  const elSubtotal = document.getElementById('cartSubtotalText');
+  if (elSubtotal) elSubtotal.textContent = formatPrice(subtotal);
+  const elFeeRow = document.getElementById('deliveryFeeRow');
+  const elFee = document.getElementById('cartDeliveryFeeText');
+  if (elFeeRow) elFeeRow.style.display = currentDeliveryType === 'delivery' ? 'flex' : 'none';
+  if (elFee) elFee.textContent = formatPrice(fee);
+  const elGrand = document.getElementById('cartGrandTotalText');
+  if (elGrand) elGrand.textContent = formatPrice(total);
+}
+
+function openCartModal() {
+  updateCartUI();
+  document.getElementById('cartModalBg').style.display = 'flex';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+}
+
+function closeCartModal() {
+  document.getElementById('cartModalBg').style.display = 'none';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+}
+
+function setDeliveryType(type) {
+  currentDeliveryType = type;
+  document.getElementById('tabDelivery').classList.toggle('active', type === 'delivery');
+  document.getElementById('tabRetirada').classList.toggle('active', type === 'retirada');
+  const addrWrap = document.getElementById('addressFieldsWrap');
+  if (addrWrap) addrWrap.style.display = type === 'delivery' ? 'block' : 'none';
+  updateCartUI();
+  updateCheckoutSummary();
+}
+
+function populateBairrosDropdown() {
+  const select = document.getElementById('custBairro');
+  if (!select) return;
+  const zones = (typeof getDeliveryZones === 'function') ? getDeliveryZones() : [];
+  select.innerHTML = '';
+
+  if (!zones || zones.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = 'Padrão';
+    opt.textContent = `Taxa Geral (${formatPrice(cfg.deliveryFee || '5,00')})`;
+    select.appendChild(opt);
+    selectedBairro = 'Padrão';
+  } else {
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Selecione seu bairro --';
+    select.appendChild(defaultOpt);
+
+    zones.forEach(z => {
+      const opt = document.createElement('option');
+      opt.value = z.name;
+      opt.textContent = `${z.name} (Taxa: ${formatPrice(z.fee)})`;
+      if (selectedBairro === z.name) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+}
+
+function onBairroChange(bairroVal) {
+  selectedBairro = bairroVal;
+  updateCheckoutSummary();
+  updateCartUI();
+}
+
+function updateCheckoutSummary() {
+  const subtotal = getCartSubtotal();
+  const fee = getCurrentDeliveryFee();
+  const total = subtotal + fee;
+
+  const elSubtotal = document.getElementById('checkoutSubtotalText');
+  const elFeeRow = document.getElementById('checkoutFeeRow');
+  const elFee = document.getElementById('checkoutFeeText');
+  const elTotal = document.getElementById('checkoutTotalText');
+
+  if (elSubtotal) elSubtotal.textContent = formatPrice(subtotal);
+  if (elFeeRow) elFeeRow.style.display = currentDeliveryType === 'delivery' ? 'flex' : 'none';
+  if (elFee) elFee.textContent = formatPrice(fee);
+  if (elTotal) elTotal.textContent = formatPrice(total);
+}
+
+function proceedToCheckout() {
+  const cart = getCart();
+  if (!cart.length) {
+    showToast('Adicione pelo menos um item ao pedido.', 'error');
+    return;
+  }
+  closeCartModal();
+  populateBairrosDropdown();
+  setDeliveryType(currentDeliveryType);
+  updateCheckoutSummary();
+  document.getElementById('checkoutModalBg').style.display = 'flex';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+  autoFillCustomerCheckout();
+}
+
+function closeCheckoutModal() {
+  document.getElementById('checkoutModalBg').style.display = 'none';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+}
+
+function selectPayMethod(method) {
+  selectedPayMethod = method;
+  document.querySelectorAll('.pay-option-card').forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio) {
+      const active = radio.value === method;
+      radio.checked = active;
+      card.classList.toggle('active', active);
+    }
+  });
+  const trocoWrap = document.getElementById('trocoFieldWrap');
+  if (trocoWrap) trocoWrap.style.display = method === 'dinheiro_entrega' ? 'block' : 'none';
+}
+
+async function submitFinalOrder() {
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const email = document.getElementById('custEmail').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+  const complement = document.getElementById('custComplement').value.trim();
+  const notes = document.getElementById('custNotes').value.trim();
+  const troco = document.getElementById('custTroco').value.trim();
+  const bairroSelect = document.getElementById('custBairro');
+  const bairroVal = bairroSelect ? bairroSelect.value : '';
+
+  if (!name) { showToast('Informe o seu nome.', 'error'); document.getElementById('custName').focus(); return; }
+  if (!phone || phone.length < 8) { showToast('Informe um número de WhatsApp válido.', 'error'); document.getElementById('custPhone').focus(); return; }
+  
+  if (currentDeliveryType === 'delivery') {
+    const zones = (typeof getDeliveryZones === 'function') ? getDeliveryZones() : [];
+    if (zones.length > 0 && !bairroVal) {
+      showToast('Por favor, selecione seu bairro de entrega.', 'error');
+      bairroSelect.focus();
+      return;
+    }
+    if (!address) {
+      showToast('Informe o endereço de entrega (rua e número).', 'error');
+      document.getElementById('custAddress').focus();
+      return;
+    }
+  }
+
+  const cart = getCart();
+  if (!cart.length) { showToast('Seu carrinho está vazio.', 'error'); return; }
+
+  const subtotal = getCartSubtotal();
+  const fee = getCurrentDeliveryFee();
+  const total = Number((subtotal + fee).toFixed(2));
+
+  const fullAddress = currentDeliveryType === 'delivery'
+    ? `${address}${bairroVal ? ', Bairro: ' + bairroVal : ''}${complement ? ' (' + complement + ')' : ''}`
+    : 'Retirada no balcão';
+
+  const orderPayload = {
+    customer_name: name,
+    customer_phone: phone,
+    customer_email: email,
+    delivery_type: currentDeliveryType,
+    delivery_address: fullAddress,
+    items: cart,
+    total: total,
+    payment_method: selectedPayMethod,
+    payment_status: 'pendente',
+    status: 'recebido',
+    notes: `${notes || ''}${troco ? ' [Troco: ' + troco + ']' : ''}`.trim()
+  };
+
+  // Vincular pedido ao cliente logado (se houver)
+  const loggedCustomer = getLoggedCustomer();
+  if (loggedCustomer) {
+    orderPayload.customer_id = loggedCustomer.id;
+  }
+
+  const btnConfirm = document.getElementById('btnConfirmOrder');
+  btnConfirm.disabled = true;
+  btnConfirm.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processando...';
+
+  try {
+    if (selectedPayMethod === 'pix_mercadopago') {
+      // Cria cobrança Pix no Mercado Pago
+      const mpResult = await createMercadoPagoPix(orderPayload);
+      orderPayload.mercadopago_payment_id = String(mpResult.paymentId);
+      
+      // Salva o pedido inicial no Supabase
+      const savedOrder = await createSupabaseOrder(orderPayload);
+      if (typeof saveMyLocalOrder === 'function') saveMyLocalOrder(savedOrder.id, phone);
+      
+      closeCheckoutModal();
+      showPixModal(mpResult, savedOrder);
+    } else {
+      // Cartão ou Dinheiro na entrega
+      const savedOrder = await createSupabaseOrder(orderPayload);
+      if (typeof saveMyLocalOrder === 'function') saveMyLocalOrder(savedOrder.id, phone);
+      closeCheckoutModal();
+      clearCart();
+      updateCartUI();
+      showOrderSuccess(savedOrder);
+    }
+  } catch (err) {
+    console.error('Erro no checkout:', err);
+    showToast(err.message || 'Erro ao processar pedido.', 'error');
+  } finally {
+    btnConfirm.disabled = false;
+    btnConfirm.innerHTML = '<i class="fa fa-check"></i> Confirmar & Pagar';
+  }
+}
+
+function showPixModal(mpResult, order) {
+  const pixModal = document.getElementById('pixModalBg');
+  const imgWrap = document.getElementById('pixQrCodeImageWrap');
+  const inputCode = document.getElementById('pixCopiaColaText');
+  
+  if (mpResult.qrCodeBase64) {
+    imgWrap.innerHTML = `<img src="data:image/png;base64,${mpResult.qrCodeBase64}" class="pix-qr-img" alt="QR Code Pix"/>`;
+  } else {
+    imgWrap.innerHTML = `<p style="color:var(--muted)">Use o código copia e cola abaixo:</p>`;
+  }
+
+  inputCode.value = mpResult.qrCodeText || '';
+  pixModal.style.display = 'flex';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+
+  // Inicia verificação automática
+  clearInterval(activeMpPollingTimer);
+  activeMpPollingTimer = setInterval(async () => {
+    const status = await checkMercadoPagoStatus(mpResult.paymentId);
+    if (status === 'approved') {
+      clearInterval(activeMpPollingTimer);
+      // Atualiza no banco que o pedido foi pago!
+      await updateSupabaseOrderStatus(order.id, 'preparo', 'pago');
+      pixModal.style.display = 'none';
+      if (typeof syncModalOpenState === 'function') syncModalOpenState();
+      clearCart();
+      updateCartUI();
+      order.payment_status = 'pago';
+      order.status = 'preparo';
+      showOrderSuccess(order);
+    }
+  }, 2500);
+}
+
+function copyPixCode() {
+  const input = document.getElementById('pixCopiaColaText');
+  if (!input) return;
+  input.select();
+  input.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(input.value).then(() => {
+    showToast('Código Pix copiado! Cole no app do seu banco.');
+  }).catch(() => {
+    document.execCommand('copy');
+    showToast('Código Pix copiado!');
+  });
+}
+
+let _lastConfirmedOrderId = null;
+
+function showOrderSuccess(order) {
+  _lastConfirmedOrderId = order.id;
+  localStorage.setItem('gamaa_last_order_id', order.id);
+  if (typeof saveMyLocalOrder === 'function') saveMyLocalOrder(order.id, order.customer_phone);
+  if (typeof checkActiveOrderPulse === 'function') checkActiveOrderPulse();
+  const modal = document.getElementById('orderSuccessModalBg');
+  document.getElementById('successOrderNumText').textContent = `Pedido #${order.id} registrado com sucesso!`;
+  
+  const summaryWrap = document.getElementById('successOrderSummary');
+  summaryWrap.innerHTML = `
+    <div style="margin-bottom:6px"><strong>Cliente:</strong> ${order.customer_name}</div>
+    <div style="margin-bottom:6px"><strong>Pagamento:</strong> ${order.payment_status === 'pago' ? '<span style="color:#22c55e;font-weight:700">PAGO VIA PIX</span>' : 'A pagar na entrega'}</div>
+    <div style="margin-bottom:6px"><strong>Recebimento:</strong> ${order.delivery_type === 'delivery' ? 'Entrega em ' + order.delivery_address : 'Retirada no balcão'}</div>
+    <div><strong>Total:</strong> <span style="color:var(--gold);font-weight:700">${formatPrice(order.total)}</span></div>
+  `;
+  modal.style.display = 'flex';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+}
+
+function goToTrackerFromSuccess() {
+  const modal = document.getElementById('orderSuccessModalBg');
+  if (modal) modal.style.display = 'none';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+  if (_lastConfirmedOrderId) {
+    openOrderTrackerModal(_lastConfirmedOrderId);
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+function closeOrderSuccessModal() {
+  document.getElementById('orderSuccessModalBg').style.display = 'none';
+  if (typeof syncModalOpenState === 'function') syncModalOpenState();
+  window.location.href = 'index.html';
+}
+
+window.addEventListener('cart_updated', () => updateCartUI());
+updateCartUI();
+
+/* ── Init Customer UI ── */
+initCustomerUI();
+</script>
+</body>
+</html>

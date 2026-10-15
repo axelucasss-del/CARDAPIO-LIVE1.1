@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CARDÁPIO DIGITAL</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <a href="#hero" class="logo" id="siteLogoWrap" title="Voltar ao início" style="cursor:pointer">
+      <span class="logo-icon" id="logoEmoji">🍔</span>
+      <div class="logo-text">
+        <span class="logo-main" id="headerName">CARDÁPIO</span>
+        <span class="logo-sub"  id="headerSub">DIGITAL</span>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="#hero" class="active"><i class="fa fa-home"></i> <span class="nav-btn-text">Início</span></a>
+      <!-- Botão do cliente é injetado dinamicamente por initCustomerUI() -->
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg-photo" id="heroBg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-tag" id="heroTag">🔥 O melhor da cidade</p>
+    <h1 class="hero-title" id="heroTitle"><span id="heroHighlight">CARDÁPIO DIGITAL</span></h1>
+    <p class="hero-subtitle" id="heroSubtitle">Escolha sua categoria e monte o seu pedido perfeito.</p>
+    <a href="#menu" class="btn-hero">Ver Cardápio <i class="fa fa-arrow-down"></i></a>
+  </div>
+  <div class="hero-scroll"><span></span></div>
+</section>
+
+<!-- MENU SECTION -->
+<section class="menu-section" id="menu">
+  <div class="section-header">
+    <h2>NOSSAS <span>CATEGORIAS</span></h2>
+    <p>Toque em uma categoria para ver os itens disponíveis</p>
+  </div>
+  <div class="categories-grid" id="categoriesGrid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-icon" id="footerEmoji">🍔</span>
+      <span class="footer-name" id="footerName">CARDÁPIO DIGITAL</span>
+    </div>
+    <div class="footer-social" id="footerSocial"></div>
+    <p class="footer-copy" id="footerText">© 2026 Cardápio Digital · Todos os direitos reservados</p>
+    <a href="admin.html" class="footer-admin-link" aria-label="Acesso Administrativo" title="Painel Admin"><i class="fa fa-lock"></i></a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js"></script>
+<script>
+/* ── Apply theme & render ─────────────────────────────── */
+const cfg  = getSiteConfig();
+const cats = getCategoryConfig();
+const menu = getMenu();
+
+applyTheme(cfg);
+
+/* ── Site name / logo ── */
+document.title = `${cfg.siteName} ${cfg.siteSub}`.trim();
+document.getElementById('headerName').textContent = cfg.siteName;
+document.getElementById('headerSub').textContent  = cfg.siteSub;
+const fEmoji = document.getElementById('footerEmoji');
+if (cfg.logoEmoji) {
+  fEmoji.textContent = cfg.logoEmoji;
+  fEmoji.style.display = '';
+} else {
+  fEmoji.textContent = '';
+  fEmoji.style.display = 'none';
+}
+document.getElementById('footerName').textContent  = `${cfg.siteName} ${cfg.siteSub}`.trim().toUpperCase();
+document.getElementById('footerText').textContent  = cfg.footerText;
+
+// Logo image override
+const emojiEl = document.getElementById('logoEmoji');
+if (cfg.logoImage) {
+  const wrap = document.getElementById('siteLogoWrap');
+  const img = document.createElement('img');
+  img.src = cfg.logoImage; img.className = 'logo-img'; img.alt = 'Logo';
+  wrap.insertBefore(img, emojiEl);
+  emojiEl.style.display = 'none';
+} else {
+  if (cfg.logoEmoji) {
+    emojiEl.textContent = cfg.logoEmoji;
+    emojiEl.style.display = '';
+  } else {
+    emojiEl.textContent = '';
+    emojiEl.style.display = 'none';
+  }
+}
+
+/* ── Hero ── */
+document.getElementById('heroTag').textContent       = cfg.heroTag;
+document.getElementById('heroSubtitle').textContent  = cfg.heroSubtitle;
+const heroHighlightEl = document.getElementById('heroHighlight');
+if (heroHighlightEl) {
+  heroHighlightEl.textContent = (cfg.heroHighlight && cfg.heroHighlight !== 'DIGITAL') ? cfg.heroHighlight : 'CARDÁPIO DIGITAL';
+}
+
+// Hero background image
+if (cfg.heroBgImage) {
+  const heroBg = document.getElementById('heroBg');
+  heroBg.style.backgroundImage = `url('${cfg.heroBgImage}')`;
+  heroBg.style.opacity = '0.35';
+}
+
+/* ── Footer social ── */
+const socialWrap = document.getElementById('footerSocial');
+if (cfg.instagram) {
+  socialWrap.innerHTML += `<a href="${cfg.instagram}" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>`;
+}
+if (cfg.whatsapp) {
+  const wa = cfg.whatsapp.replace(/\D/g,'');
+  socialWrap.innerHTML += `<a href="https://wa.me/${wa}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>`;
+}
+
+/* ── Category cards ── */
+const grid = document.getElementById('categoriesGrid');
+
+getCatOrder().forEach((slug, idx) => {
+  const cat   = cats[slug];
+  if (!cat) return;
+  const items = (menu[slug] || []);
+  const count = items.length;
+  const isFeatured = slug === 'hamburgueres';
+
+  const card = document.createElement('div');
+  card.className = 'category-card' + (isFeatured ? ' featured' : '');
+  card.onclick = () => location.href = `category.html?cat=${slug}`;
+
+  const photoBg = cat.photo
+    ? `<div class="cat-photo-bg" style="background-image:url('${cat.photo}')"></div><div class="cat-overlay"></div>`
+    : '';
+
+  const featTag = isFeatured ? `<div class="card-tag">⭐ Destaque</div>` : '';
+  const iconHTML = cat.icon ? `<div class="card-icon">${cat.icon}</div>` : '';
+
+  card.innerHTML = `
+    ${photoBg}
+    ${featTag}
+    <div class="card-glow"></div>
+    ${iconHTML}
+    <div class="card-body">
+      <h3>${cat.label}</h3>
+      <p>${cat.description}</p>
+      <span class="card-badge">${count} ${count === 1 ? 'item' : 'itens'}</span>
+    </div>
+    <div class="card-arrow"><i class="fa fa-chevron-right"></i></div>`;
+
+  grid.appendChild(card);
+});
+
+/* ── Particles ── */
+const pc = document.getElementById('particles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left              = Math.random() * 100 + 'vw';
+  p.style.animationDelay    = Math.random() * 8 + 's';
+  p.style.animationDuration = (6 + Math.random() * 6) + 's';
+  p.style.width = p.style.height = (3 + Math.random() * 8) + 'px';
+  pc.appendChild(p);
+}
+
+/* ── Init Customer UI ── */
+initCustomerUI();
+</script>
+</body>
+</html>
